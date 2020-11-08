@@ -1,10 +1,8 @@
-tradingapp
-==============================
+# tradingapp
 
 This repo defines core classes of our trading applications.
 
-Project Organization
-------------
+## Project Organization
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
@@ -46,6 +44,27 @@ Project Organization
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
 
---------
+## Template reference: 
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+- https://github.com/fedejaure/cookiecutter-modern-pypackage
+- https://github.com/drivendata/cookiecutter-data-science/
+
+## Deployment reference: 
+
+The main idea is to create a tox.ini with all linter commands (flake8, mypy, darglint). Then, our gitlab-ci.yml is configured to run the tox file.
+
+- tox: 
+    - https://tox.readthedocs.io/en/latest/
+    - https://tox.readthedocs.io/en/latest/example/basic.html
+- documentation:
+    - darglint: https://github.com/terrencepreilly/darglint
+    - google docstrings: https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
+    - sphinx: https://github.com/sphinx-doc/sphinx 
+- typing:
+    - mypy:https://github.com/python/mypy
+    - typing: https://docs.python.org/3/library/typing.html
+- pep-8:
+    - flake8: https://github.com/PyCQA/flake8
+    - (pylint): https://github.com/PyCQA/pylint
+- examples:
+    - tox in gitlab-ci.yml: https://stackoverflow.com/questions/62568690/run-tox-and-docker-compose-in-gitlab-ci-yml-failed-connection-to-localhost
