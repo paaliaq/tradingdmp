@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def add(a, b):
     """Add two values a and b.
 
@@ -17,7 +18,8 @@ def add(a, b):
 
     return a + b
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     print(np.random.randint(2, size=10))
     a = 2
