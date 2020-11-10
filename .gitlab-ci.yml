@@ -1,17 +1,22 @@
 image: python:3.8
 
 stages:
-  - linting
   - test
   
 include:
   - template: Code-Quality.gitlab-ci.yml
 
-application-test-release:
-  stage: linting
+application-test-black:
+  stage: test
   script:
     - pip install black
     - black --check src/
+
+application-test-darglint:
+  stage: test
+  script:
+    - pip install pydocstyle
+    - pydocstyle --convention google src/
 
 code_quality:
   stage: test
