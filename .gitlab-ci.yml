@@ -15,8 +15,14 @@ application-test-black:
 application-test-darglint:
   stage: test
   script:
-    - pip install pydocstyle
+    - pip install pydocstyle 
     - pydocstyle --convention google src/
+
+application-test-mypy:
+  stage: test
+  script:
+    - pip install mypy 
+    - mypy src/
 
 code_quality:
   stage: test
