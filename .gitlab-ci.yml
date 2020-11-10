@@ -12,7 +12,7 @@ application-test-black:
     - pip install black
     - black --check src/
 
-application-test-darglint:
+application-test-pydocstyle:
   stage: test
   script:
     - pip install pydocstyle 
