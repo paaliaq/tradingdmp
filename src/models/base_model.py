@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def add(a, b):
+def add(a: float, b: float) -> float:
     """Add two values a and b.
 
     Args:
