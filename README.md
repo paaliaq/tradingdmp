@@ -56,6 +56,7 @@ The main idea is to create a tox.ini with all linter commands (flake8, mypy, dar
 - tox: 
     - https://tox.readthedocs.io/en/latest/
     - https://tox.readthedocs.io/en/latest/example/basic.html
+    - https://www.integralist.co.uk/posts/toxini/#example-tox-ini
 - documentation:
     - darglint: https://github.com/terrencepreilly/darglint
     - google docstrings: https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
