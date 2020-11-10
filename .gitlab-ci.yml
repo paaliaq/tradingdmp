@@ -1,4 +1,4 @@
-image: python38
+image: python:3.8
 
 stages:
   - linting
