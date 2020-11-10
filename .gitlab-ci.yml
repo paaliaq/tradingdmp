@@ -1,4 +1,4 @@
-image: ubuntu:latest
+image: python38
 
 stages:
   - linting
@@ -10,8 +10,6 @@ include:
 application-test-release:
   stage: linting
   script:
-    - apt update
-    - apt -y install pip
     - pip install black
     - black --check src/
 
