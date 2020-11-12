@@ -13,16 +13,23 @@ application-lint-black:
     - pip install black
     - black --check src/
 
+application-lint-pep8-naming:
+  stage: lint
+  script:
+    - pip install flake8
+    - pip install pep8-naming
+    - flake8 src/
+    
 application-lint-pydocstyle:
   stage: lint
   script:
-    - pip install pydocstyle 
+    - pip install pydocstyle
     - pydocstyle --convention google src/
 
 application-lint-mypy:
   stage: lint
   script:
-    - pip install mypy 
+    - pip install mypy
     - mypy src/
 
 code_quality:
