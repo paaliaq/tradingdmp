@@ -1,1 +1,1 @@
-"""The :mod:`src.models` module includes classes and methods for fitting prediction models."""
+"""The :mod:`src.models` module includes classes for machine learning models."""

@@ -1,28 +1,42 @@
 """Base class for all model classes."""
 
-import numpy as np
+from abc import ABC, abstractmethod
+from typing import Any
+
+import pandas as pd
 
 
-def add(a: float, b: float) -> float:
-    """Add two values a and b.
+class BaseModel(ABC):
+    """Base class for data fetching and processing."""
 
-    Args:
-      a: The argument which could be a number or could not be.
-      b: The argument which could be a number or could not be.
+    @abstractmethod
+    def fit(self, x: pd.DataFrame, y: pd.DataFrame, *args: Any, **kwargs: Any) -> None:
+        """Method for fitting a model.
 
-    Raises:
-      ValueError: If a or b < 0
-    """
-    if a < 0 or b < 0:
-        raise ValueError
+        This function should fit the model given some training data x and y.
 
-    return a + b
+        Args:
+            x (pd.DataFrame): Training features in data frame of shape (n, m)
+            y (pd.DataFrame): Training targets in data frame of shape (n, d)
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
 
+        """
+        pass
 
-if __name__ == "__main__":
+    @abstractmethod
+    def predict(self, x: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        """Method for predicting with a fitted model.
 
-    print(np.random.randint(2, size=10))
-    a = 2
-    b = 5
-    c = add(a, b)
-    print(c)
+        This function should fit the model given some training data x and y.
+
+        Args:
+            x (pd.DataFrame): Test features in data frame of shape (n, m)
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            y: Predicted targets in data frame of shape (n, d)
+
+        """
+        pass
