@@ -21,11 +21,11 @@ class BasePolicy(ABC):
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            qty: Quantity of shares of the particular ticker symbol that should
-                 be owned by the trader from the next time step onwards.
-                 If qty == 0, the trader should sell all shares if it owns any.
-                 If qty > 0, the trader has to buy shares unless it already owns
-                 qty shares of the particular ticker.
+            qty (int): Quantity of shares of the particular ticker symbol that
+                    should be owned by the trader from the next time step onwards.
+                    If qty == 0, the trader should sell all shares if it owns any.
+                    If qty > 0, the trader has to buy shares unless it already owns
+                    qty shares of the particular ticker.
 
         """
         pass

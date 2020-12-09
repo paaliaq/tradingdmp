@@ -21,6 +21,8 @@ class BaseModel(ABC):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
 
+        Returns:
+            None
         """
         pass
 
@@ -36,7 +38,6 @@ class BaseModel(ABC):
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            y: Predicted targets in data frame of shape (n, d)
-
+            y (pd.DataFrame): Predicted targets in data frame of shape (n, d)
         """
         pass
