@@ -1,6 +1,6 @@
-# tradingdmg
+# tradingdmp
 
-This repo defines classes for data, models and policies (dmg). These classes are all
+This repo defines classes for data, models and policies (dmp). These classes are all
 meant to be used by our trading applications.
 
 ## Project Organization
