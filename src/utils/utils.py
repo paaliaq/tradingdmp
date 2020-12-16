@@ -43,7 +43,7 @@ class Rawdata:
 
                 if x == 0:
                     query_result = iter_query_result
-                else:  # Joing in to dataframe
+                else:  # Join in to dataframe
                     query_result = query_result.merge(iter_query_result, on="date")
 
         else:
