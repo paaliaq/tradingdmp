@@ -12,11 +12,11 @@ class RawData:
         self.db = pymongo.MongoClient(mongodbkey)
 
     def bors_data(
-            self,
-            granularity: str,
-            ticker_list: list,
-            dt_start: datetime = datetime(2000, 1, 1),
-            dt_end: datetime = datetime.today(),
+        self,
+        granularity: str,
+        ticker_list: list,
+        dt_start: datetime = datetime(2000, 1, 1),
+        dt_end: datetime = datetime.today(),
     ) -> pd.DataFrame:
         """Fetches raw data from bors data source based on time and ticker selection."""
         iter_len = len(ticker_list)
@@ -52,8 +52,8 @@ class RawData:
             if x == 0:
                 query_result = iter_query_result
             else:  # Join in to dataframe
-                query_result = query_result.join(iter_query_result,
-                                                 how='outer',
-                                                 on=time_key)
+                query_result = query_result.join(
+                    iter_query_result, how="outer", on=time_key
+                )
 
         return query_result
