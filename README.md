@@ -11,6 +11,7 @@ meant to be used by our trading applications.
 │   ├── data                <- Subpackage for data pipeline
 │   ├── models              <- Subpackage for models
 │   └── policy              <- Subpackage for policies
+│   └── utils               <- Subpackage for utility functions
 ├── data                    <- Repository with data for development and testing.
 │   ├── raw                 <- The original, immutable data
 │   ├── interim             <- Intermediate data that has been transformed
