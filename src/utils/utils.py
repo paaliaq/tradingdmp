@@ -80,13 +80,14 @@ class RawData:
                 print(ticker_list[x], "failed")
                 continue
 
-            iter_query_result.rename({time_key: "date"}, axis=1, inplace=True)
-            iter_query_result.set_index("_id", inplace=True)
             iter_query_result["ticker"] = ticker_list[x]
 
             if x == 0:
                 query_result = iter_query_result
             else:  # Join in to dataframe
                 query_result = pd.concat([iter_query_result, iter_query_result])
+
+            query_result.rename({time_key: "date"}, axis=1, inplace=True)
+            query_result.set_index("_id", inplace=True)
 
         return query_result
