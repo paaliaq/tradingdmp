@@ -47,6 +47,11 @@ class RawData:
         ticker_set = set(ticker_list)
         ticker_list = list(ticker_set)
 
+        if granularity not in ["yearly", "quarterly", "daily"]:
+            raise ValueError(
+                "granularity must any of: 'daily', 'quarterly' or 'yearly'"
+            )
+
         # Granularity effect and check
         granularity_dict = {
             "yearly": {
@@ -62,11 +67,6 @@ class RawData:
 
         collection = self.db[granularity_dict[granularity]["collection_name"]]
         time_key = granularity_dict[granularity]["time_key"]
-
-        if any(granularity not in s for s in ["time_key", "quarterly", "daily"]):
-            raise ValueError(
-                "granularity must any of: 'daily', 'quarterly' or 'yearly'"
-            )
 
         for x in range(0, iter_len):
             try:
