@@ -2,7 +2,7 @@
 name = "tradingapp"
 version = "0.1.0"
 description = ""
-authors = ["Julius Kittler"]
+authors = ["Julius Kittler", "August Andersen"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
