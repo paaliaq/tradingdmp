@@ -68,6 +68,7 @@ class RawData:
         collection = self.db[granularity_dict[granularity]["collection_name"]]
         time_key = granularity_dict[granularity]["time_key"]
 
+        iter_len = len(ticker_list)
         for x in range(0, iter_len):
             try:
                 iter_query_result = pd.DataFrame(
