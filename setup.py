@@ -10,4 +10,5 @@ setup(
     author="Julius Kittler, August Andersen",
     license="",
     python_requires=">=3.8"
+
 )
