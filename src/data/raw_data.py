@@ -282,8 +282,6 @@ class RawData:
 
         df.rename({time_key: "date"}, axis=1, inplace=True)
 
-        print(df)
-
         # Check data
         self._check_data(df)
 
