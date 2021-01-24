@@ -1,4 +1,4 @@
-"""utility function used for DMP."""
+"""Utility functions to get raw, unprocessed data from our database."""
 import datetime
 from typing import List, Tuple
 
