@@ -44,6 +44,14 @@ class PrepData:
         if not is_datetime(df.date):
             raise ValueError("date must be of dtype datetime!")
 
+        # Check that there are no NaN or infinite values
+        contains_nan = df.isin([np.nan]).any(axis=None)
+        if contains_nan:
+            raise ValueError("df must not contain NaN values.")
+        contains_inf = df.isin([np.inf, -np.inf]).any(axis=None)
+        if contains_inf:
+            raise ValueError("df must not contain inf or -inf values.")
+
         # We do not check that index is _id because a single _id can turn in man columns
         # for some data sources, such as IEX.
 
