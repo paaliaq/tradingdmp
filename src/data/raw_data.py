@@ -96,8 +96,8 @@ class RawData:
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ rd = RawData(mongodbkey)
-            $ data = rd.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
+            $ rdata = RawData(mongodbkey)
+            $ data = rdata.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
         """
         # Check inputs
         self._check_inputs(ticker_list, dt_start, dt_end)
@@ -136,8 +136,8 @@ class RawData:
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ rd = RawData(mongodbkey)
-            $ data = rd.usa_iex_1min(ticker_list = ["MSFT", "AAPL"])
+            $ rdata = RawData(mongodbkey)
+            $ data = rdata.usa_iex_1min(ticker_list = ["MSFT", "AAPL"])
         """
         # Check inputs
         self._check_inputs(ticker_list, dt_start, dt_end)
@@ -176,8 +176,8 @@ class RawData:
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ rd = RawData(mongodbkey)
-            $ data = rd.usa_yahoo_api(ticker_list = ["MSFT", "AAPL"])
+            $ rdata = RawData(mongodbkey)
+            $ data = rdata.usa_yahoo_api(ticker_list = ["MSFT", "AAPL"])
         """
         # Check inputs
         self._check_inputs(ticker_list, dt_start, dt_end)
@@ -216,8 +216,8 @@ class RawData:
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ rd = RawData(mongodbkey)
-            $ data = rd.usa_finviz_api(ticker_list = ["MSFT", "AAPL"])
+            $ rdata = RawData(mongodbkey)
+            $ data = rdata.usa_finviz_api(ticker_list = ["MSFT", "AAPL"])
         """
         # Check inputs
         self._check_inputs(ticker_list, dt_start, dt_end)

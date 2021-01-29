@@ -1,12 +1,12 @@
-"""Utility functions to get processed data from our database.
+"""Utility functions to get pre-processed data from our database.
 
-The processing includes the following:
+The pre-processing includes the following:
 - transformation of dtypes of columns
 - sorting by ticker and time
 - handling NA values
 - filtering columns
 - renaming columns
-The processing excludes adding or transforming features, which belongs in final_data.py.
+The pre-processing excludes adding/transforming features, which belongs in feat_data.py.
 """
 import datetime
 import gc
@@ -19,7 +19,7 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 from data.raw_data import RawData
 
 
-class InterimData:
+class PrepData:
     """Class used for fetching processed data from database."""
 
     def __init__(self, mongodbkey: str):
@@ -53,12 +53,12 @@ class InterimData:
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
         dt_end: datetime.date = datetime.datetime.today(),
     ) -> pd.DataFrame:
-        """Fetches interim data from alphavantage based on time and ticker selection.
+        """Fetches processed data from alphavantage based on time and ticker selection.
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ interimdata = InterimData(mongodbkey)
-            $ data = interimdata.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
+            $ pdata = PrepData(mongodbkey)
+            $ data = pdata.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
         df = self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
@@ -99,12 +99,12 @@ class InterimData:
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
         dt_end: datetime.date = datetime.datetime.today(),
     ) -> pd.DataFrame:
-        """Fetches interim data from IEX based on time and ticker selection.
+        """Fetches processed data from IEX based on time and ticker selection.
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ interimdata = InterimData(mongodbkey)
-            $ data = interimdata.usa_iex_1min(ticker_list = ["MSFT", "AAPL"])
+            $ pdata = PrepData(mongodbkey)
+            $ data = pdata.usa_iex_1min(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
         df = self.rd.usa_iex_1min(ticker_list, dt_start, dt_end)
@@ -161,12 +161,12 @@ class InterimData:
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
         dt_end: datetime.date = datetime.datetime.today(),
     ) -> pd.DataFrame:
-        """Fetches interim data from yahoo based on time and ticker selection.
+        """Fetches processed data from yahoo based on time and ticker selection.
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ interimdata = InterimData(mongodbkey)
-            $ data = interimdata.usa_yahoo_api(ticker_list = ["MSFT", "AAPL"])
+            $ pdata = PrepData(mongodbkey)
+            $ data = pdata.usa_yahoo_api(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
         df = self.rd.usa_yahoo_api(ticker_list, dt_start, dt_end)
@@ -252,12 +252,12 @@ class InterimData:
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
         dt_end: datetime.date = datetime.datetime.today(),
     ) -> pd.DataFrame:
-        """Fetches interim data from finviz based on time and ticker selection.
+        """Fetches processed data from finviz based on time and ticker selection.
 
         Example:
             $ mongodbkey = "" # your mongodbkey
-            $ interimdata = InterimData(mongodbkey)
-            $ data = interimdata.usa_finviz_api(ticker_list = ["MSFT", "AAPL"])
+            $ pdata = PrepData(mongodbkey)
+            $ data = pdata.usa_finviz_api(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
         df = self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
