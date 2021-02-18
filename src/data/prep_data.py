@@ -343,11 +343,13 @@ class PrepData:
 
         return df
 
-    def bors_data(self,
-                  ticker_list: List[str],
-                  dt_start: datetime.date = datetime.datetime(2000, 1, 1),
-                  dt_end: datetime.date = datetime.datetime.today(),
-                  granularity: str = "yearly") -> pd.DataFrame:
+    def bors_data(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.date = datetime.datetime(2000, 1, 1),
+        dt_end: datetime.date = datetime.datetime.today(),
+        granularity: str = "yearly",
+    ) -> pd.DataFrame:
         """Fetches processed data from bors-data based on time and ticker selection.
 
         Example:
@@ -356,10 +358,12 @@ class PrepData:
             $ data = pdata.bors_data(ticker_list = ["ABB", "AAB"])
         """
         # Get raw data from database
-        df = self.rd.bors_data(ticker_list=ticker_list,
-                               dt_start=dt_start,
-                               dt_end=dt_end,
-                               granularity=granularity)
+        df = self.rd.bors_data(
+            ticker_list=ticker_list,
+            dt_start=dt_start,
+            dt_end=dt_end,
+            granularity=granularity,
+        )
 
         # Sort by ticker and date and reset index
         df = self._sort_data(df)
