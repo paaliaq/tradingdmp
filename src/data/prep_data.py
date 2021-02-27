@@ -34,23 +34,24 @@ class PrepData:
 
     def _check_data(self, df: pd.DataFrame) -> None:
         """Function to check that the data meets all our requirements."""
-        # Check that required columns exist
-        if "date" not in df.columns:
-            raise ValueError("df must be contain a 'date' column!")
-        if "ticker" not in df.columns:
-            raise ValueError("df must be contain a 'ticker' column!")
+        if not df.empty:
+            # Check that required columns exist
+            if "date" not in df.columns:
+                raise ValueError("df must be contain a 'date' column!")
+            if "ticker" not in df.columns:
+                raise ValueError("df must be contain a 'ticker' column!")
 
-        # Check column datatypes
-        if not is_datetime(df.date):
-            raise ValueError("date must be of dtype datetime!")
+            # Check column datatypes
+            if not is_datetime(df.date):
+                raise ValueError("date must be of dtype datetime!")
 
-        # Check that there are no NaN or infinite values
-        contains_nan = df.isin([np.nan]).any(axis=None)
-        if contains_nan:
-            raise ValueError("df must not contain NaN values.")
-        contains_inf = df.isin([np.inf, -np.inf]).any(axis=None)
-        if contains_inf:
-            raise ValueError("df must not contain inf or -inf values.")
+            # Check that there are no NaN or infinite values
+            contains_nan = df.isin([np.nan]).any(axis=None)
+            if contains_nan:
+                raise ValueError("df must not contain NaN values.")
+            contains_inf = df.isin([np.inf, -np.inf]).any(axis=None)
+            if contains_inf:
+                raise ValueError("df must not contain inf or -inf values.")
 
         # We do not check that index is _id because a single _id can turn in man columns
         # for some data sources, such as IEX.
@@ -71,30 +72,33 @@ class PrepData:
         # Get raw data from database
         df = self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
 
-        # Keep rows with data in 'data' column
-        df = df.loc[df.loc[:, "n_cols"] > 0, :]
+        if not df.empty:
+            # Keep rows with data in 'data' column
+            df = df.loc[df.loc[:, "n_cols"] > 0, :]
 
-        # Remove metadata columns
-        colnames = ["ticker", "date", "data"]
-        df = df.loc[:, colnames]
+            # Remove metadata columns
+            colnames = ["ticker", "date", "data"]
+            df = df.loc[:, colnames]
 
-        # Extract 'data' column into multiple columns
-        df = pd.concat([df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1)
+            # Extract 'data' column into multiple columns
+            df = pd.concat(
+                [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
+            )
 
-        # Transform dtypes
-        df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+            # Transform dtypes
+            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
 
-        # Sort by ticker and date and reset index
-        df = self._sort_data(df)
+            # Sort by ticker and date and reset index
+            df = self._sort_data(df)
 
-        # Replace -9999 with NAN
-        df = df.replace(-9999, np.nan)
+            # Replace -9999 with NAN
+            df = df.replace(-9999, np.nan)
 
-        # Replace NAN by ticker
-        df = df.groupby("ticker").apply(
-            lambda group: group.interpolate(method="linear")
-        )
-        df = df.dropna(axis=0)
+            # Replace NAN by ticker
+            df = df.groupby("ticker").apply(
+                lambda group: group.interpolate(method="linear")
+            )
+            df = df.dropna(axis=0)
 
         # Check data
         self._check_data(df)
@@ -117,46 +121,47 @@ class PrepData:
         # Get raw data from database
         df = self.rd.usa_iex_1min(ticker_list, dt_start, dt_end)
 
-        # Keep rows with data in 'data' column
-        df = df.loc[df.loc[:, "n_rows"] > 0, :]
+        if not df.empty:
+            # Keep rows with data in 'data' column
+            df = df.loc[df.loc[:, "n_rows"] > 0, :]
 
-        # Remove metadata columns
-        colnames = ["ticker", "date", "data"]
-        df = df.loc[:, colnames]
+            # Remove metadata columns
+            colnames = ["ticker", "date", "data"]
+            df = df.loc[:, colnames]
 
-        # Extract 'data' column into multiple columns
-        df_all = pd.DataFrame()
-        for i, row in df.iterrows():
-            df_new = pd.DataFrame(row["data"])
-            df_new.loc[:, "ticker"] = row["ticker"]
-            df_new.loc[:, "date"] = row["date"]
-            df_all = df_all.append(df_new)
+            # Extract 'data' column into multiple columns
+            df_all = pd.DataFrame()
+            for i, row in df.iterrows():
+                df_new = pd.DataFrame(row["data"])
+                df_new.loc[:, "ticker"] = row["ticker"]
+                df_new.loc[:, "date"] = row["date"]
+                df_all = df_all.append(df_new)
 
-        df = df_all.copy()
-        del df_all
-        gc.collect()
+            df = df_all.copy()
+            del df_all
+            gc.collect()
 
-        # Adjust date column to include the time
-        df.loc[:, "date"] = pd.to_datetime(df.date + " " + df.minute)
-        df = df.drop(columns=["minute"])
+            # Adjust date column to include the time
+            df.loc[:, "date"] = pd.to_datetime(df.date + " " + df.minute)
+            df = df.drop(columns=["minute"])
 
-        # Rearrange columns
-        colnames = df.columns.to_list()
-        colnames.remove("ticker")
-        colnames.remove("date")
-        df = df.loc[:, ["ticker", "date"] + colnames]
+            # Rearrange columns
+            colnames = df.columns.to_list()
+            colnames.remove("ticker")
+            colnames.remove("date")
+            df = df.loc[:, ["ticker", "date"] + colnames]
 
-        # Sort by ticker and date and reset index
-        df = self._sort_data(df)
+            # Sort by ticker and date and reset index
+            df = self._sort_data(df)
 
-        # Replace -9999 with NAN
-        df = df.replace(-9999, np.nan)
+            # Replace -9999 with NAN
+            df = df.replace(-9999, np.nan)
 
-        # Replace NAN by ticker
-        df = df.groupby("ticker").apply(
-            lambda group: group.interpolate(method="linear")
-        )
-        df = df.dropna(axis=0)
+            # Replace NAN by ticker
+            df = df.groupby("ticker").apply(
+                lambda group: group.interpolate(method="linear")
+            )
+            df = df.dropna(axis=0)
 
         # Check data
         self._check_data(df)
@@ -179,75 +184,94 @@ class PrepData:
         # Get raw data from database
         df = self.rd.usa_yahoo_api(ticker_list, dt_start, dt_end)
 
-        # Keep rows with data in 'data' column
-        df = df.loc[df.loc[:, "n_cols"] > 0, :]
+        if not df.empty:
+            # Keep rows with data in 'data' column
+            df = df.loc[df.loc[:, "n_cols"] > 0, :]
 
-        # Remove metadata columns
-        colnames = ["ticker", "date", "data"]
-        df = df.loc[:, colnames]
+            # Remove metadata columns
+            colnames = ["ticker", "date", "data"]
+            df = df.loc[:, colnames]
 
-        # Extract 'data' column into multiple columns
-        df = pd.concat([df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1)
+            # Extract 'data' column into multiple columns
+            df = pd.concat(
+                [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
+            )
 
-        # Remove data columns to be excluded
-        colnames = [
-            "currency",
-            "displayName",
-            "earningsTimestamp",
-            "earningsTimestampEnd",
-            "earningsTimestampStart",
-            "esgPopulated",
-            "exchange",
-            "exchangeDataDelayedBy",
-            "exchangeTimeZone",
-            "exchangeTimezoneName",
-            "exchangeTimezoneShortName",
-            "fiftyTwoWeekRange",
-            "financialCurrency",
-            "firstTradeDateMilliseconds",
-            "fullExchangeName",
-            "gmtOffSetMilliseconds",
-            "language",
-            "longName",
-            "market",
-            "marketState",
-            "messageBoardId",
-            "postMarketTime",
-            "priceHint",
-            "quoteSourceName",
-            "quoteType",
-            "region",
-            "regularMarketDayRange",
-            "regularMarketTime",
-            "shortName",
-            "sourceInterval",
-            "tradeable",
-            "triggerable",
-        ]
-        df = df.drop(columns=colnames, errors="ignore")
+            # Remove data columns to be excluded
+            colnames = [
+                "currency",
+                "displayName",
+                "earningsTimestamp",
+                "earningsTimestampEnd",
+                "earningsTimestampStart",
+                "esgPopulated",
+                "exchange",
+                "exchangeDataDelayedBy",
+                "exchangeTimeZone",
+                "exchangeTimezoneName",
+                "exchangeTimezoneShortName",
+                "fiftyTwoWeekRange",
+                "financialCurrency",
+                "firstTradeDateMilliseconds",
+                "fullExchangeName",
+                "gmtOffSetMilliseconds",
+                "language",
+                "longName",
+                "market",
+                "marketState",
+                "messageBoardId",
+                "postMarketTime",
+                "priceHint",
+                "quoteSourceName",
+                "quoteType",
+                "region",
+                "regularMarketDayRange",
+                "regularMarketTime",
+                "shortName",
+                "sourceInterval",
+                "tradeable",
+                "triggerable",
+                "ipoExpectedDate",
+                "dividendDate",
+                # Useful but many tickers have NA and similar data available in finviz
+                "trailingAnnualDividendRate",
+                "trailingPE",
+                "trailingAnnualDividendYield",
+                "epsTrailingTwelveMonths",
+                "epsForward",
+                "epsCurrentYear",
+                "priceEpsCurrentYear",
+                "bookValue",
+                "forwardPE",
+                "priceToBook",
+                "postMarketChangePercent",
+                "postMarketPrice",
+                "postMarketChange",
+            ]
+            df = df.drop(columns=colnames, errors="ignore")
 
-        # Transform dtypes
-        df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
-        colnames = df.columns.to_list()
-        colnames.remove("ticker")
-        colnames.remove("date")
-        for col in colnames:
-            try:
-                df.loc[:, col] = df.loc[:, col].astype(float)
-            except ValueError:
-                df.loc[:, col] = df.loc[:, col].astype(object)
+            # Transform dtypes
+            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+            colnames = df.columns.to_list()
+            colnames.remove("ticker")
+            colnames.remove("date")
+            for col in colnames:
+                try:
+                    df.loc[:, col] = df.loc[:, col].astype(float)
+                except ValueError:
+                    df.loc[:, col] = df.loc[:, col].astype(object)
 
-        # Sort by ticker and date and reset index
-        df = self._sort_data(df)
+            # Sort by ticker and date and reset index
+            df = self._sort_data(df)
 
-        # Replace -9999 with NAN
-        df = df.replace(-9999, np.nan)
+            # Replace -9999 with NAN
+            df = df.replace(-9999, np.nan)
 
-        # Replace NAN by ticker
-        df = df.groupby("ticker").apply(
-            lambda group: group.interpolate(method="linear")
-        )
-        df = df.dropna(axis=0)
+            # Replace NAN by ticker
+            df = df.groupby("ticker").apply(
+                lambda group: group.interpolate(method="linear")
+            )
+            df = df.dropna(axis=0)
 
         # Check data
         self._check_data(df)
@@ -270,73 +294,78 @@ class PrepData:
         # Get raw data from database
         df = self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
 
-        # Keep rows with data in 'data' column
-        df = df.loc[df.loc[:, "n_cols"] > 0, :]
+        if not df.empty:
+            # Keep rows with data in 'data' column
+            df = df.loc[df.loc[:, "n_cols"] > 0, :]
 
-        # Remove metadata columns
-        colnames = ["ticker", "date", "data"]
-        df = df.loc[:, colnames]
+            # Remove metadata columns
+            colnames = ["ticker", "date", "data"]
+            df = df.loc[:, colnames]
 
-        # Extract 'data' column into multiple columns
-        df = pd.concat([df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1)
+            # Extract 'data' column into multiple columns
+            df = pd.concat(
+                [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
+            )
 
-        # Remove data columns to be excluded
-        colnames = [
-            "Company",
-            "Country",
-            "Index",
-            "InstTrans",
-            "Earnings",
-            "52WRange",
-            "Volatility",
-        ]
-        df = df.drop(columns=colnames, errors="ignore")
+            # Remove data columns to be excluded
+            colnames = [
+                "Company",
+                "Country",
+                "Index",
+                "InstTrans",
+                "Earnings",
+                "52WRange",
+                "Volatility",
+            ]
+            df = df.drop(columns=colnames, errors="ignore")
 
-        # Format object columns so they can be converted to numeric types
-        colnames = df.columns.to_list()
-        colnames.remove("ticker")
-        colnames.remove("date")
+            # Format object columns so they can be converted to numeric types
+            colnames = df.columns.to_list()
+            colnames.remove("ticker")
+            colnames.remove("date")
 
-        m = {"K": 3, "M": 6, "B": 9, "T": 12}
-        for col in colnames:
-            # Remove '%' unit at end of string
-            df.loc[:, col] = df.loc[:, col].str.replace("%", "")
+            m = {"K": 3, "M": 6, "B": 9, "T": 12}
+            for col in colnames:
+                # Remove '%' unit at end of string
+                df.loc[:, col] = df.loc[:, col].str.replace("%", "")
 
-            # Remove ','
-            df.loc[:, col] = df.loc[:, col].str.replace(",", "")
+                # Remove ','
+                df.loc[:, col] = df.loc[:, col].str.replace(",", "")
 
-            # Convert endings with K, M, B, T into numeric form
-            if (
-                df.loc[:, col].str.endswith("K").any()
-                or df.loc[:, col].str.endswith("M").any()
-                or df.loc[:, col].str.endswith("B").any()
-                or df.loc[:, col].str.endswith("T").any()
-            ):
+                # Convert endings with K, M, B, T into numeric form
+                if (
+                    df.loc[:, col].str.endswith("K").any()
+                    or df.loc[:, col].str.endswith("M").any()
+                    or df.loc[:, col].str.endswith("B").any()
+                    or df.loc[:, col].str.endswith("T").any()
+                ):
+                    try:
+                        col_new = [
+                            float(i[:-1]) * (10 ** m[i[-1]]) for i in df.loc[:, col]
+                        ]
+                        df.loc[:, col] = [round(x) for x in col_new]
+                    except ValueError:
+                        pass
+
+            # Transform dtypes
+            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
+            for col in colnames:
                 try:
-                    col_new = [float(i[:-1]) * (10 ** m[i[-1]]) for i in df.loc[:, col]]
-                    df.loc[:, col] = [round(x) for x in col_new]
+                    df.loc[:, col] = df.loc[:, col].astype(float)
                 except ValueError:
-                    pass
+                    df.loc[:, col] = df.loc[:, col].astype(object)
 
-        # Transform dtypes
-        df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
-        for col in colnames:
-            try:
-                df.loc[:, col] = df.loc[:, col].astype(float)
-            except ValueError:
-                df.loc[:, col] = df.loc[:, col].astype(object)
+            # Sort by ticker and date and reset index
+            df = self._sort_data(df)
 
-        # Sort by ticker and date and reset index
-        df = self._sort_data(df)
+            # Replace -9999 with NAN
+            df = df.replace(-9999, np.nan)
 
-        # Replace -9999 with NAN
-        df = df.replace(-9999, np.nan)
-
-        # Replace NAN by ticker
-        df = df.groupby("ticker").apply(
-            lambda group: group.interpolate(method="linear")
-        )
-        df = df.dropna(axis=0)
+            # Replace NAN by ticker
+            df = df.groupby("ticker").apply(
+                lambda group: group.interpolate(method="linear")
+            )
+            df = df.dropna(axis=0)
 
         # Check data
         self._check_data(df)
