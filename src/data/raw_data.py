@@ -22,17 +22,15 @@ class RawData:
         """Function to check standard inputs across all public data fetch functions."""
         # Type checks
         if not isinstance(dt_start, datetime.datetime):
-            raise TypeError("dt_start must be of type datetime!")
-
+            raise TypeError("dt_start must be of type datetime.")
         if not isinstance(dt_end, datetime.datetime):
-            raise TypeError("dt_end must be of type datetime!")
-
+            raise TypeError("dt_end must be of type datetime.")
         if not isinstance(ticker_list, list):
-            raise TypeError("ticker_list must be of type list!")
+            raise TypeError("ticker_list must be of type list.")
 
         # Logical checks
         if dt_start > dt_end:
-            raise ValueError("dt_start must be less than dt_end!")
+            raise ValueError("dt_start must be less than dt_end.")
 
     def _adjust_inputs(
         self,
@@ -76,13 +74,13 @@ class RawData:
         if not df.empty:
             # Check that required columns exist
             if "date" not in df.columns:
-                raise ValueError("df must be contain a 'date' column!")
+                raise ValueError("df must be contain a 'date' column.")
             if "ticker" not in df.columns:
-                raise ValueError("df must be contain a 'ticker' column!")
+                raise ValueError("df must be contain a 'ticker' column.")
 
             # Check that index is _id
             if df.index.name != "_id":
-                raise ValueError("df index must be '_id'!")
+                raise ValueError("df index must be '_id'.")
 
     def usa_alphavantage_eod(
         self,
