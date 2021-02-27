@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from dateutil.rrule import FR, MO, TH, TU, WE, WEEKLY, rrule
 
 from data.base_data import BaseFeatureData
 from data.prep_data import PrepData
@@ -21,6 +22,54 @@ class DataAlpacaPocCat(BaseFeatureData):
     def __init__(self, mongodbkey: str):
         """Initializes PrepData instance for getting processed data."""
         self.pdata = PrepData(mongodbkey=mongodbkey)
+
+    def _check_inputs(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.datetime,
+        dt_end: datetime.datetime,
+        dt_end_required: bool,
+        n_ppc_per_row: int,
+        return_y: bool,
+        return_last_date_only: bool,
+        bins: List[Any],
+        bin_labels: List[str],
+    ) -> None:
+        """Function to check standard inputs across all public data fetch functions."""
+        # Type checks
+        if not isinstance(ticker_list, list):
+            raise ValueError("ticker_list must be of type list.")
+        if not isinstance(dt_start, datetime.datetime):
+            raise ValueError("dt_start must be of type datetime.")
+        if not isinstance(dt_end, datetime.datetime):
+            raise ValueError("dt_end must be of type datetime.")
+        if not isinstance(dt_end_required, bool):
+            raise ValueError("dt_end_required must be of type bool.")
+        if not isinstance(n_ppc_per_row, int):
+            raise ValueError("n_ppc_per_row must be of type int.")
+        if not isinstance(return_y, bool):
+            raise ValueError("return_y must be of type bool.")
+        if not isinstance(return_last_date_only, bool):
+            raise ValueError("return_last_date_only must be of type bool.")
+        if not isinstance(bins, list):
+            raise ValueError("bins must be of type list.")
+        if not isinstance(bin_labels, list):
+            raise ValueError("bin_labels must be of type list.")
+
+        # Logical checks
+        if not len(ticker_list) > 0:
+            raise ValueError("ticker_list must not be empty.")
+        timedelta_weekdays = rrule(
+            WEEKLY, byweekday=(MO, TU, WE, TH, FR), dtstart=dt_start, until=dt_end
+        ).count()
+        if not timedelta_weekdays >= n_ppc_per_row + 2:
+            raise ValueError(
+                "No. of weekdays btw. dt_start and dt_end must be >= n_ppc_per_row+2."
+            )
+        if not len(bins) >= 3:
+            raise ValueError("bins must contain at least 3 elements to form 2 classes.")
+        if not len(bins) == len(bin_labels) + 1:
+            raise ValueError("It is required that: len(bins) == len(bin_labels) + 1")
 
     def _check_data(
         self, data_dict: Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]
@@ -45,8 +94,9 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool = False,
-        n_dates_per_row: int = 10,
+        n_ppc_per_row: int = 12,
         return_y: bool = True,
+        return_last_date_only: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
         bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
     ) -> Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -64,14 +114,24 @@ class DataAlpacaPocCat(BaseFeatureData):
                 symbol. If dt_end_required is true, the returned data_dict will only
                 contain a key value pair for a ticker if there is data available for
                 this ticker for the dt_end date.
-            n_dates_per_row: Minimum number of dates required for a particular ticker
-                symbol. If there are fewer dates available for a ticker, then the
-                returned data_dict won't contain a key value pair for this ticker.
+            n_ppc_per_row: Minimum number of price percentages changes per row. This
+                mainly affects the price data from alphavantage, based on which the
+                price percentage changes are computed (from day to day). Important:
+                this affects the number of dates required per ticker. Example: if
+                n_ppc_per_row is 10, then we need 10+2 dates (+2 because we need 1 date
+                in the beginning and end of a sequence of dates to compute percentage
+                changes).
             return_y: Whether the data frame with the targets y should be returned. If
                 False, the second dataframe in Tuple[pd.DataFrame, pd.DataFrame]] is
                 an empty data frame.
-            bins: The bins for converting the numeric percentage changes (representing
-                the target to be predicted) into a multi-class categorical variable.
+            return_last_date_only: Whether only data for the most recent available date
+                per ticker should be returned. If this is set to True, then return_y
+                is automatically set to False, i.e. y is never returned (since we do not
+                know the price percentage change from the last available date to the
+                next future date). You should set return_last_date_only to true when
+                making predictions during trading.
+            bins: The bins for converting the numeric price percentage changes (the
+                target to be predicted) into a multi-class categorical variable.
             bin_labels: The labels given to the levels of the multi-class categorical
                 variable created according to the input argument 'bins'.
 
@@ -83,9 +143,20 @@ class DataAlpacaPocCat(BaseFeatureData):
                 where n is the number of samples, m is the number of features and d is
                 the number of target variables.
         """
+        # Check inputs
+        self._check_inputs(
+            ticker_list=ticker_list,
+            dt_start=dt_start,
+            dt_end=dt_end,
+            dt_end_required=dt_end_required,
+            n_ppc_per_row=n_ppc_per_row,
+            return_y=return_y,
+            return_last_date_only=return_last_date_only,
+            bins=bins,
+            bin_labels=bin_labels,
+        )
+
         # Get data
-        n_dates_per_row = n_dates_per_row + 2  # 2 more required for perc. changes
-        dt_start = dt_start - datetime.timedelta(days=n_dates_per_row)
         data_dict = dict()
         for ticker in ticker_list:
 
@@ -138,7 +209,7 @@ class DataAlpacaPocCat(BaseFeatureData):
                         continue
 
                 # If there are not sufficient dates for this ticker, do not return it
-                sufficient_dates_avail = n_dates_per_row - 1 <= len(df.date.unique())
+                sufficient_dates_avail = n_ppc_per_row - 1 <= len(df.date.unique())
                 if not sufficient_dates_avail:
 
                     # DEBUGGING
@@ -152,7 +223,7 @@ class DataAlpacaPocCat(BaseFeatureData):
                 df["y"] = pd.cut(df["y"], bins, labels=bin_labels)
 
                 # Convert OHCL data to df_pct with percentage changes from day to day
-                key_cols = range(n_dates_per_row - 2)
+                key_cols = range(n_ppc_per_row - 2)
                 df_pct = pd.concat(
                     [df_pct.shift(-i) for i in key_cols],
                     axis=1,
@@ -174,5 +245,3 @@ class DataAlpacaPocCat(BaseFeatureData):
 
         # Check data
         self._check_data(data_dict)
-
-        return data_dict
