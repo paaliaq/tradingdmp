@@ -26,6 +26,25 @@ class PrepData:
         """Initializes RawData instance for getting the raw data to be processed."""
         self.rd = RawData(mongodbkey=mongodbkey)
 
+    def _check_inputs(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.date,
+        dt_end: datetime.date,
+    ) -> None:
+        """Function to check standard inputs across all public data fetch functions."""
+        # Type checks
+        if not isinstance(dt_start, datetime.datetime):
+            raise TypeError("dt_start must be of type datetime.")
+        if not isinstance(dt_end, datetime.datetime):
+            raise TypeError("dt_end must be of type datetime.")
+        if not isinstance(ticker_list, list):
+            raise TypeError("ticker_list must be of type list.")
+
+        # Logical checks
+        if dt_start > dt_end:
+            raise ValueError("dt_start must be less than dt_end.")
+
     def _sort_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Function to return data sorted by ticker and date with new index."""
         df = df.sort_values(["ticker", "date"])
@@ -37,13 +56,13 @@ class PrepData:
         if not df.empty:
             # Check that required columns exist
             if "date" not in df.columns:
-                raise ValueError("df must be contain a 'date' column!")
+                raise ValueError("df must be contain a 'date' column.")
             if "ticker" not in df.columns:
-                raise ValueError("df must be contain a 'ticker' column!")
+                raise ValueError("df must be contain a 'ticker' column.")
 
             # Check column datatypes
             if not is_datetime(df.date):
-                raise ValueError("date must be of dtype datetime!")
+                raise ValueError("date must be of dtype datetime.")
 
             # Check that there are no NaN or infinite values
             contains_nan = df.isin([np.nan]).any(axis=None)
@@ -118,6 +137,9 @@ class PrepData:
             $ pdata = PrepData(mongodbkey)
             $ data = pdata.usa_iex_1min(ticker_list = ["MSFT", "AAPL"])
         """
+        # Check inputs
+        self._check_inputs(ticker_list, dt_start, dt_end)
+
         # Get raw data from database
         df = self.rd.usa_iex_1min(ticker_list, dt_start, dt_end)
 
@@ -181,6 +203,9 @@ class PrepData:
             $ pdata = PrepData(mongodbkey)
             $ data = pdata.usa_yahoo_api(ticker_list = ["MSFT", "AAPL"])
         """
+        # Check inputs
+        self._check_inputs(ticker_list, dt_start, dt_end)
+
         # Get raw data from database
         df = self.rd.usa_yahoo_api(ticker_list, dt_start, dt_end)
 
@@ -291,6 +316,9 @@ class PrepData:
             $ pdata = PrepData(mongodbkey)
             $ data = pdata.usa_finviz_api(ticker_list = ["MSFT", "AAPL"])
         """
+        # Check inputs
+        self._check_inputs(ticker_list, dt_start, dt_end)
+
         # Get raw data from database
         df = self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
 
