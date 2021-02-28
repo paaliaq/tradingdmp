@@ -2,7 +2,7 @@
 
 import datetime
 from functools import reduce
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -37,6 +37,46 @@ class DataAlpacaPocCat(BaseFeatureData):
     ) -> None:
         """Function to check standard inputs across all public data fetch functions."""
         # Type checks
+        self._check_inputs_type(
+            ticker_list,
+            dt_start,
+            dt_end,
+            dt_end_required,
+            n_ppc_per_row,
+            return_last_date_only,
+            return_training_dfs,
+            bins,
+            bin_labels,
+        )
+
+        # Logical checks
+        self._check_inputs_logic(
+            ticker_list,
+            dt_start,
+            dt_end,
+            dt_end_required,
+            n_ppc_per_row,
+            return_last_date_only,
+            return_training_dfs,
+            bins,
+            bin_labels,
+        )
+
+        # Logical checks
+
+    def _check_inputs_type(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.datetime,
+        dt_end: datetime.datetime,
+        dt_end_required: bool,
+        n_ppc_per_row: int,
+        return_last_date_only: bool,
+        return_training_dfs: bool,
+        bins: List[Any],
+        bin_labels: List[str],
+    ) -> None:
+        """Auxilary function to check that the input arguments have the correct type."""
         if not isinstance(ticker_list, list):
             raise ValueError("ticker_list must be of type list.")
         if not isinstance(dt_start, datetime.datetime):
@@ -56,12 +96,24 @@ class DataAlpacaPocCat(BaseFeatureData):
         if not isinstance(bin_labels, list):
             raise ValueError("bin_labels must be of type list.")
 
-        # Logical checks
+    def _check_inputs_logic(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.datetime,
+        dt_end: datetime.datetime,
+        dt_end_required: bool,
+        n_ppc_per_row: int,
+        return_last_date_only: bool,
+        return_training_dfs: bool,
+        bins: List[Any],
+        bin_labels: List[str],
+    ) -> None:
+        """Auxilary function to check that the input arguments are logically correct."""
         if not len(ticker_list) > 0:
             raise ValueError("ticker_list must not be empty.")
         timedelta_weekdays = rrule(
             WEEKLY, byweekday=(MO, TU, WE, TH, FR), dtstart=dt_start, until=dt_end
-        ).count()
+        ).count()  # type: ignore
         if not timedelta_weekdays >= n_ppc_per_row + 2:
             raise ValueError(
                 "No. of weekdays btw. dt_start and dt_end must be >= n_ppc_per_row+2."
@@ -79,10 +131,10 @@ class DataAlpacaPocCat(BaseFeatureData):
         # compute the price percentage changes for the last row of each ticker.
         contains_nan = df_x.isin([np.nan]).any(axis=None)
         if contains_nan:
-            raise ValueError(f"df_x contains NaN values for {key}.")
+            raise ValueError("df_x contains NaN values.")
         contains_inf = df_x.isin([np.inf, -np.inf]).any(axis=None)
         if contains_inf:
-            raise ValueError(f"df_x contains inf or -inf values for {key}.")
+            raise ValueError("df_x contains inf or -inf values.")
 
     def get_data(
         self,
@@ -95,7 +147,9 @@ class DataAlpacaPocCat(BaseFeatureData):
         return_training_dfs: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
         bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
-    ) -> Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]:
+    ) -> Union[
+        Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
+    ]:
         """Method for getting data that can be passed to a model.
 
         This function should fetch raw data, clean this data, conduct feature
@@ -108,7 +162,7 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_end: All data until incl. dt_end is fetched.
             dt_end_required: Whether data for dt_end is required for a particular ticker
                 symbol. If dt_end_required is true, the returned data_dict will only
-                contain a key value pair for a ticker if there is data available for
+                contain a key-value pair for a ticker if there is data available for
                 this ticker for the dt_end date.
             n_ppc_per_row: Minimum number of price percentages changes per row. This
                 mainly affects the price data from alphavantage, based on which the
@@ -138,12 +192,17 @@ class DataAlpacaPocCat(BaseFeatureData):
                 variable created according to the input argument 'bins'.
 
         Returns:
-            data_dict: a dictionary that contains one key-value pair for each
-                ticker symbol. The key always represents the ticker symbol. There is one
-                key for each element in the input ticker_list. Each value is a tuple of
-                two pandas data frames x and y: x of shape (n, m) and y of shape (n, d),
-                where n is the number of samples, m is the number of features and d is
-                the number of target variables.
+            data_dict: If return_training_dfs is False, the return type is
+                Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], a dictionary that contains
+                one key-value pair for each ticker symbol. The key always represents the
+                ticker symbol. There is one key for each element in the input
+                ticker_list. Each value is a tuple of two pandas data frames x and y:
+                x of shape (n, m) and y of shape (n, d), where n is the number of
+                samples, m is the number of features and d is the number of target
+                variables.
+                If return_training_dfs is True, the return type is
+                Tuple[pd.DataFrame, pd.DataFrame], a type of pandas data frames x and y.
+                Both data frames contain the data for all tickers and dates combined.
         """
         # Check inputs
         self._check_inputs(
@@ -224,7 +283,9 @@ class DataAlpacaPocCat(BaseFeatureData):
             df_all = df_all.loc[~df_all.y.isna(), :].reset_index(drop=True)
             df_x = df_all.drop(columns=["ticker", "date", "y"])
             df_y = df_all.loc[:, "y"].to_frame()
-            res = (df_x, df_y)
+
+            # Return result
+            return (df_x, df_y)
         else:
             # Dict of tuples of data frames, where keys represent the ticker
             data_dict = dict()
@@ -233,7 +294,6 @@ class DataAlpacaPocCat(BaseFeatureData):
                 df_x = df_all.loc[df_all.ticker == ticker, x_cols]
                 df_y = df_all.loc[df_all.ticker == ticker, "y"]
                 data_dict[ticker] = (df_x, df_y)
-            res = data_dict
 
-        # Return result
-        return res
+            # Return result
+            return data_dict
