@@ -30,8 +30,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_end: datetime.datetime,
         dt_end_required: bool,
         n_ppc_per_row: int,
-        return_y: bool,
         return_last_date_only: bool,
+        return_training_dfs: bool,
         bins: List[Any],
         bin_labels: List[str],
     ) -> None:
@@ -47,10 +47,10 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("dt_end_required must be of type bool.")
         if not isinstance(n_ppc_per_row, int):
             raise ValueError("n_ppc_per_row must be of type int.")
-        if not isinstance(return_y, bool):
-            raise ValueError("return_y must be of type bool.")
         if not isinstance(return_last_date_only, bool):
             raise ValueError("return_last_date_only must be of type bool.")
+        if not isinstance(return_training_dfs, bool):
+            raise ValueError("return_training_dfs must be of type bool.")
         if not isinstance(bins, list):
             raise ValueError("bins must be of type list.")
         if not isinstance(bin_labels, list):
@@ -71,22 +71,18 @@ class DataAlpacaPocCat(BaseFeatureData):
         if not len(bins) == len(bin_labels) + 1:
             raise ValueError("It is required that: len(bins) == len(bin_labels) + 1")
 
-    def _check_data(
-        self, data_dict: Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]
-    ) -> None:
+    def _check_data(self, df_x: pd.DataFrame) -> None:
         """Function to check that the data meets all our requirements."""
-        for key, value in data_dict.items():
-
-            # Check that there are no NaN or infinite values in df_x
-            # We only check df_x and not df_y because df_y can contain NaN because
-            # we do not have the price value of "tomorrow" and therefore cannot
-            # compute the price percentage changes for the last row of each ticker.
-            contains_nan = value[0].isin([np.nan]).any(axis=None)
-            if contains_nan:
-                raise ValueError(f"df_x contains NaN values for {key}.")
-            contains_inf = value[0].isin([np.inf, -np.inf]).any(axis=None)
-            if contains_inf:
-                raise ValueError(f"df_x contains inf or -inf values for {key}.")
+        # Check that there are no NaN or infinite values in df_x
+        # We only check df_x and not df_y because df_y can contain NaN because
+        # we do not have the price value of "tomorrow" and therefore cannot
+        # compute the price percentage changes for the last row of each ticker.
+        contains_nan = df_x.isin([np.nan]).any(axis=None)
+        if contains_nan:
+            raise ValueError(f"df_x contains NaN values for {key}.")
+        contains_inf = df_x.isin([np.inf, -np.inf]).any(axis=None)
+        if contains_inf:
+            raise ValueError(f"df_x contains inf or -inf values for {key}.")
 
     def get_data(
         self,
@@ -95,8 +91,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_end: datetime.datetime,
         dt_end_required: bool = False,
         n_ppc_per_row: int = 12,
-        return_y: bool = True,
         return_last_date_only: bool = False,
+        return_training_dfs: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
         bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
     ) -> Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -121,15 +117,21 @@ class DataAlpacaPocCat(BaseFeatureData):
                 n_ppc_per_row is 10, then we need 10+2 dates (+2 because we need 1 date
                 in the beginning and end of a sequence of dates to compute percentage
                 changes).
-            return_y: Whether the data frame with the targets y should be returned. If
-                False, the second dataframe in Tuple[pd.DataFrame, pd.DataFrame]] is
-                an empty data frame.
             return_last_date_only: Whether only data for the most recent available date
                 per ticker should be returned. If this is set to True, then return_y
                 is automatically set to False, i.e. y is never returned (since we do not
                 know the price percentage change from the last available date to the
                 next future date). You should set return_last_date_only to true when
                 making predictions during trading.
+            return_training_dfs: Whether data should be returned for model fitting or
+                not. You will want to set return_training_dfs to True if you need a
+                dataset for model training, validation and testing. If set to True, the
+                data for all tickers is returned as tuple of data frames: (df_x, df_y).
+                You won't know, which row corresponds to which ticker (and date).
+                Moreover, rows with NA values for y will be dropped (i.e. the very last
+                row for each ticker will be dropped). If set to False, the data for all
+                tickers is returned as dictionary of tuples (df_x, df_y), where each key
+                value pair corresponds to a particular ticker symbol.
             bins: The bins for converting the numeric price percentage changes (the
                 target to be predicted) into a multi-class categorical variable.
             bin_labels: The labels given to the levels of the multi-class categorical
@@ -150,37 +152,20 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_end=dt_end,
             dt_end_required=dt_end_required,
             n_ppc_per_row=n_ppc_per_row,
-            return_y=return_y,
             return_last_date_only=return_last_date_only,
+            return_training_dfs=return_training_dfs,
             bins=bins,
             bin_labels=bin_labels,
         )
 
         # Get data
-        data_dict = dict()
+        df_all = pd.DataFrame()
+
         for ticker in ticker_list:
 
             df_av = self.pdata.usa_alphavantage_eod([ticker], dt_start, dt_end)
             df_yh = self.pdata.usa_yahoo_api([ticker], dt_start, dt_end)
             df_fv = self.pdata.usa_finviz_api([ticker], dt_start, dt_end)
-
-            # DEBUGGING
-            print("\n\nTicker: {}".format(ticker))
-            print(
-                "len(df_av): {} from {} to {}".format(
-                    len(df_av), df_av.date.min(), df_av.date.max()
-                )
-            )
-            print(
-                "len(df_yh): {} from {} to {}".format(
-                    len(df_yh), df_yh.date.min(), df_yh.date.max()
-                )
-            )
-            print(
-                "len(df_fv): {} from {} to {}".format(
-                    len(df_fv), df_fv.date.min(), df_fv.date.max()
-                )
-            )
 
             if not df_av.empty and not df_yh.empty and not df_fv.empty:
 
@@ -194,13 +179,6 @@ class DataAlpacaPocCat(BaseFeatureData):
                 df_list = [df_av, df_yh, df_fv]
                 df = reduce(lambda l, r: pd.merge(l, r, on=["ticker", "date"]), df_list)
 
-                # DEBUGGING
-                print(
-                    "len(df): {} from {} to {}".format(
-                        len(df), df.date.min(), df.date.max()
-                    )
-                )
-
                 # Skip adding df to data_dict if df does not fulfill filter conditions
                 if dt_end_required:
                     # Check if the dt_end is available for the ticker.
@@ -211,9 +189,6 @@ class DataAlpacaPocCat(BaseFeatureData):
                 # If there are not sufficient dates for this ticker, do not return it
                 sufficient_dates_avail = n_ppc_per_row - 1 <= len(df.date.unique())
                 if not sufficient_dates_avail:
-
-                    # DEBUGGING
-                    print("sufficient_dates_avail: {}".format(sufficient_dates_avail))
                     continue
 
                 # Create y as percentage change of av_close from current to next day
@@ -234,14 +209,31 @@ class DataAlpacaPocCat(BaseFeatureData):
 
                 # Merge df_pct with df_static, the non-percentage change data
                 df_static = df.tail(len(df_pct)).reset_index(drop=True)
-                df_merged = pd.merge(
+                df_ticker = pd.merge(
                     df_static, df_pct, left_index=True, right_index=True, how="left"
                 )
-
-                # Split data into X and y and save in data_dict
-                df_x = df_merged.drop(columns=["ticker", "date", "y"])
-                df_y = df_merged.loc[:, "y"].to_frame()
-                data_dict[ticker] = (df_x, df_y)
+                df_all = df_all.append(df_ticker)
 
         # Check data
-        self._check_data(data_dict)
+        x_cols = df_all.drop(columns=["ticker", "date", "y"]).columns
+        self._check_data(df_all.loc[:, x_cols])
+
+        # Format output as tuple of data frames or as dict of tuples of data frames
+        if return_training_dfs:
+            # Tuple of data frames
+            df_all = df_all.loc[~df_all.y.isna(), :].reset_index(drop=True)
+            df_x = df_all.drop(columns=["ticker", "date", "y"])
+            df_y = df_all.loc[:, "y"].to_frame()
+            res = (df_x, df_y)
+        else:
+            # Dict of tuples of data frames, where keys represent the ticker
+            data_dict = dict()
+            df_all = df_all.reset_index(drop=True)
+            for ticker in df_all.ticker.unique():
+                df_x = df_all.loc[df_all.ticker == ticker, x_cols]
+                df_y = df_all.loc[df_all.ticker == ticker, "y"]
+                data_dict[ticker] = (df_x, df_y)
+            res = data_dict
+
+        # Return result
+        return res
