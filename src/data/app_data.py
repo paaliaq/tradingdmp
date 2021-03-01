@@ -142,7 +142,7 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool = False,
-        n_ppc_per_row: int = 12,
+        n_ppc_per_row: int = 10,
         return_last_date_only: bool = False,
         return_training_dfs: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
@@ -246,7 +246,7 @@ class DataAlpacaPocCat(BaseFeatureData):
                         continue
 
                 # If there are not sufficient dates for this ticker, do not return it
-                sufficient_dates_avail = n_ppc_per_row - 1 <= len(df.date.unique())
+                sufficient_dates_avail = n_ppc_per_row + 1 <= len(df.date.unique())
                 if not sufficient_dates_avail:
                     continue
 
@@ -257,7 +257,7 @@ class DataAlpacaPocCat(BaseFeatureData):
                 df["y"] = pd.cut(df["y"], bins, labels=bin_labels)
 
                 # Convert OHCL data to df_pct with percentage changes from day to day
-                key_cols = range(n_ppc_per_row - 2)
+                key_cols = range(n_ppc_per_row)
                 df_pct = pd.concat(
                     [df_pct.shift(-i) for i in key_cols],
                     axis=1,
