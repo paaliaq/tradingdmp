@@ -104,6 +104,21 @@ class PrepData:
                 [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
             )
 
+            # Select required columns
+            colnames = [
+                "ticker",
+                "date",
+                "open",
+                "close",
+                "high",
+                "low",
+                "volume",
+                "adjusted_close",
+                "dividend_amount",
+                "split_coefficient",
+            ]
+            df = df.loc[:, colnames]
+
             # Transform dtypes
             df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
 
@@ -162,6 +177,21 @@ class PrepData:
             df = df_all.copy()
             del df_all
             gc.collect()
+
+            # Select required columns
+            colnames = [
+                "ticker",
+                "date",
+                "high",
+                "low",
+                "open",
+                "close",
+                "average",
+                "volume",
+                "notional",
+                "numberOfTrades",
+            ]
+            df = df.loc[:, colnames]
 
             # Adjust date column to include the time
             df.loc[:, "date"] = pd.to_datetime(df.date + " " + df.minute)
@@ -222,58 +252,41 @@ class PrepData:
                 [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
             )
 
-            # Remove data columns to be excluded
+            # Select required columns
             colnames = [
-                "currency",
-                "displayName",
-                "earningsTimestamp",
-                "earningsTimestampEnd",
-                "earningsTimestampStart",
-                "esgPopulated",
-                "exchange",
-                "exchangeDataDelayedBy",
-                "exchangeTimeZone",
-                "exchangeTimezoneName",
-                "exchangeTimezoneShortName",
-                "fiftyTwoWeekRange",
-                "financialCurrency",
-                "firstTradeDateMilliseconds",
-                "fullExchangeName",
-                "gmtOffSetMilliseconds",
-                "language",
-                "longName",
-                "market",
-                "marketState",
-                "messageBoardId",
-                "postMarketTime",
-                "priceHint",
-                "quoteSourceName",
-                "quoteType",
-                "region",
-                "regularMarketDayRange",
-                "regularMarketTime",
-                "shortName",
-                "sourceInterval",
-                "tradeable",
-                "triggerable",
-                "ipoExpectedDate",
-                "dividendDate",
-                # Useful but many tickers have NA and similar data available in finviz
-                "trailingAnnualDividendRate",
-                "trailingPE",
-                "trailingAnnualDividendYield",
-                "epsTrailingTwelveMonths",
-                "epsForward",
-                "epsCurrentYear",
-                "priceEpsCurrentYear",
-                "bookValue",
-                "forwardPE",
-                "priceToBook",
-                "postMarketChangePercent",
-                "postMarketPrice",
-                "postMarketChange",
+                "ticker",
+                "date",
+                "regularMarketChange",
+                "regularMarketChangePercent",
+                "regularMarketPrice",
+                "regularMarketDayHigh",
+                "regularMarketDayLow",
+                "regularMarketVolume",
+                "regularMarketPreviousClose",
+                "bid",
+                "ask",
+                "bidSize",
+                "askSize",
+                "regularMarketOpen",
+                "averageDailyVolume3Month",
+                "averageDailyVolume10Day",
+                "fiftyTwoWeekLowChange",
+                "fiftyTwoWeekLowChangePercent",
+                "fiftyTwoWeekHighChange",
+                "fiftyTwoWeekHighChangePercent",
+                "fiftyTwoWeekLow",
+                "fiftyTwoWeekHigh",
+                "sharesOutstanding",
+                "fiftyDayAverage",
+                "fiftyDayAverageChange",
+                "fiftyDayAverageChangePercent",
+                "twoHundredDayAverage",
+                "twoHundredDayAverageChange",
+                "twoHundredDayAverageChangePercent",
+                "marketCap",
+                "price",
             ]
-            df = df.drop(columns=colnames, errors="ignore")
+            df = df.loc[:, colnames]
 
             # Transform dtypes
             df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"])
@@ -335,17 +348,79 @@ class PrepData:
                 [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
             )
 
-            # Remove data columns to be excluded
+            # Select required columns
             colnames = [
-                "Company",
-                "Country",
-                "Index",
-                "InstTrans",
-                "Earnings",
-                "52WRange",
-                "Volatility",
+                "ticker",
+                "date",
+                "Sector",
+                "Industry",
+                "PE",
+                "EPSttm",
+                "InsiderOwn",
+                "ShsOutstand",
+                "PerfWeek",
+                "MarketCap",
+                "ForwardPE",
+                "EPSnextY",
+                "InsiderTrans",
+                "ShsFloat",
+                "PerfMonth",
+                "Income",
+                "PEG",
+                "EPSnextQ",
+                "InstOwn",
+                "ShortFloat",
+                "PerfQuarter",
+                "Sales",
+                "PS",
+                "EPSthisY",
+                "ShortRatio",
+                "PerfHalfY",
+                "Booksh",
+                "PB",
+                "ROA",
+                "TargetPrice",
+                "PerfYear",
+                "Cashsh",
+                "PC",
+                "EPSnext5Y",
+                "ROE",
+                "PerfYTD",
+                "Dividend",
+                "PFCF",
+                "EPSpast5Y",
+                "ROI",
+                "52WHigh",
+                "Beta",
+                "QuickRatio",
+                "Salespast5Y",
+                "GrossMargin",
+                "52WLow",
+                "ATR",
+                "Employees",
+                "CurrentRatio",
+                "SalesQQ",
+                "OperMargin",
+                "RSI14",
+                "Optionable",
+                "DebtEq",
+                "EPSQQ",
+                "ProfitMargin",
+                "RelVolume",
+                "PrevClose",
+                "Shortable",
+                "LTDebtEq",
+                "Payout",
+                "AvgVolume",
+                "Price",
+                "Recom",
+                "SMA20",
+                "SMA50",
+                "SMA200",
+                "Volume",
+                "Change",
             ]
-            df = df.drop(columns=colnames, errors="ignore")
+            df = df.loc[:, colnames]
 
             # Format object columns so they can be converted to numeric types
             colnames = df.columns.to_list()
