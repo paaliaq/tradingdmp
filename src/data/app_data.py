@@ -62,8 +62,6 @@ class DataAlpacaPocCat(BaseFeatureData):
             bin_labels,
         )
 
-        # Logical checks
-
     def _check_inputs_type(
         self,
         ticker_list: List[str],
@@ -199,8 +197,7 @@ class DataAlpacaPocCat(BaseFeatureData):
                 ticker_list. Each value is a tuple of two pandas data frames x and y:
                 x of shape (n, m) and y of shape (n, d), where n is the number of
                 samples, m is the number of features and d is the number of target
-                variables.
-                If return_training_dfs is True, the return type is
+                variables. If return_training_dfs is True, the return type is
                 Tuple[pd.DataFrame, pd.DataFrame], a type of pandas data frames x and y.
                 Both data frames contain the data for all tickers and dates combined.
         """
