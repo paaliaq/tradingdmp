@@ -316,6 +316,7 @@ class PrepData:
 
         return df
 
+    # flake8: noqa: C901
     def usa_finviz_api(
         self,
         ticker_list: List[str],
@@ -448,7 +449,7 @@ class PrepData:
                     or df.loc[:, col].str.endswith("T").any()
                 ):
                     try:
-                        col_new = [0] * N
+                        col_new = [0.0] * N
                         for i, x in enumerate(df.loc[:, col]):
                             if x[-1] in m:
                                 col_new[i] = float(x[:-1]) * (10 ** m[x[-1]])

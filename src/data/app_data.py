@@ -32,6 +32,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
+        return_date_col: bool,
+        return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
     ) -> None:
@@ -45,6 +47,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             n_ppc_per_row,
             return_last_date_only,
             return_training_dfs,
+            return_date_col,
+            return_ticker_col,
             bins,
             bin_labels,
         )
@@ -58,6 +62,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             n_ppc_per_row,
             return_last_date_only,
             return_training_dfs,
+            return_date_col,
+            return_ticker_col,
             bins,
             bin_labels,
         )
@@ -71,9 +77,11 @@ class DataAlpacaPocCat(BaseFeatureData):
         n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
+        return_date_col: bool,
+        return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
-    ) -> None:
+    ) -> None:  # noqa: C901
         """Auxilary function to check that the input arguments have the correct type."""
         if not isinstance(ticker_list, list):
             raise ValueError("ticker_list must be of type list.")
@@ -89,6 +97,10 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("return_last_date_only must be of type bool.")
         if not isinstance(return_training_dfs, bool):
             raise ValueError("return_training_dfs must be of type bool.")
+        if not isinstance(return_date_col, bool):
+            raise ValueError("return_date_col must be of type bool.")
+        if not isinstance(return_ticker_col, bool):
+            raise ValueError("return_ticker_col must be of type bool.")
         if not isinstance(bins, list):
             raise ValueError("bins must be of type list.")
         if not isinstance(bin_labels, list):
@@ -103,6 +115,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
+        return_date_col: bool,
+        return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
     ) -> None:
@@ -134,6 +148,7 @@ class DataAlpacaPocCat(BaseFeatureData):
         if contains_inf:
             raise ValueError("df_x contains inf or -inf values.")
 
+    # flake8: noqa: C901
     def get_data(
         self,
         ticker_list: List[str],
@@ -143,6 +158,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         n_ppc_per_row: int = 10,
         return_last_date_only: bool = False,
         return_training_dfs: bool = False,
+        return_date_col: bool = False,
+        return_ticker_col: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
         bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
     ) -> Union[
@@ -184,6 +201,8 @@ class DataAlpacaPocCat(BaseFeatureData):
                 row for each ticker will be dropped). If set to False, the data for all
                 tickers is returned as dictionary of tuples (df_x, df_y), where each key
                 value pair corresponds to a particular ticker symbol.
+            return_date_col: Whether or not the date column should be kept in df_x.
+            return_ticker_col: Whether or not the ticker column should be kept in df_x.
             bins: The bins for converting the numeric price percentage changes (the
                 target to be predicted) into a multi-class categorical variable.
             bin_labels: The labels given to the levels of the multi-class categorical
@@ -210,6 +229,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             n_ppc_per_row=n_ppc_per_row,
             return_last_date_only=return_last_date_only,
             return_training_dfs=return_training_dfs,
+            return_date_col=return_date_col,
+            return_ticker_col=return_ticker_col,
             bins=bins,
             bin_labels=bin_labels,
         )
@@ -271,15 +292,20 @@ class DataAlpacaPocCat(BaseFeatureData):
                 df_all = df_all.append(df_ticker)
 
         # Check data
-        x_cols = df_all.drop(columns=["ticker", "date", "y"]).columns
-        self._check_data(df_all.loc[:, x_cols])
+        self._check_data(df_all.drop(columns=["y"]))  # exclude y because it can have NA
 
         # Format output as tuple of data frames or as dict of tuples of data frames
         if return_training_dfs:
             # Tuple of data frames
             df_all = df_all.loc[~df_all.y.isna(), :].reset_index(drop=True)
-            df_x = df_all.drop(columns=["ticker", "date", "y"])
+            df_x = df_all.drop(columns=["y"])
             df_y = df_all.loc[:, "y"].to_frame()
+
+            # Drop ticker and date if necessary
+            if not return_ticker_col:
+                df_x = df_x.drop(columns=["ticker"])
+            if not return_date_col:
+                df_x = df_x.drop(columns=["date"])
 
             # Return result
             return (df_x, df_y)
@@ -288,8 +314,15 @@ class DataAlpacaPocCat(BaseFeatureData):
             data_dict = dict()
             df_all = df_all.reset_index(drop=True)
             for ticker in df_all.ticker.unique():
-                df_x = df_all.loc[df_all.ticker == ticker, x_cols]
+                df_x = df_all.loc[df_all.ticker == ticker, :].drop(columns=["y"])
                 df_y = df_all.loc[df_all.ticker == ticker, "y"]
+
+                # Drop ticker and date if necessary
+                if not return_ticker_col:
+                    df_x = df_x.drop(columns=["ticker"])
+                if not return_date_col:
+                    df_x = df_x.drop(columns=["date"])
+
                 data_dict[ticker] = (df_x, df_y)
 
             # Return result
