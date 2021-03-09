@@ -20,7 +20,7 @@ pep8-naming = "^0.11.1"
 mypy = "^0.790"
 pydocstyle = "^5.1.1"
 darglint = "^1.5.8"
-mljar-supervised = "^0.9.1"
+pymongo = "*"
 
 [build-system]
 requires = ["poetry>=0.12"]
