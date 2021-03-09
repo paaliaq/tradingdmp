@@ -427,7 +427,12 @@ class PrepData:
             colnames.remove("ticker")
             colnames.remove("date")
 
+            # Replace "-" and "" with 0: Not sure if this is the best solution
+            df.loc[:, colnames] = df.loc[:, colnames].replace("-", "0")
+            df.loc[:, colnames] = df.loc[:, colnames].replace("", "0")
+
             m = {"K": 3, "M": 6, "B": 9, "T": 12}
+            N = len(df)
             for col in colnames:
                 # Remove '%' unit at end of string
                 df.loc[:, col] = df.loc[:, col].str.replace("%", "")
@@ -443,9 +448,12 @@ class PrepData:
                     or df.loc[:, col].str.endswith("T").any()
                 ):
                     try:
-                        col_new = [
-                            float(i[:-1]) * (10 ** m[i[-1]]) for i in df.loc[:, col]
-                        ]
+                        col_new = [0] * N
+                        for i, x in enumerate(df.loc[:, col]):
+                            if x[-1] in m:
+                                col_new[i] = float(x[:-1]) * (10 ** m[x[-1]])
+                            else:
+                                col_new[i] = float(x)
                         df.loc[:, col] = [round(x) for x in col_new]
                     except ValueError:
                         pass
