@@ -9,6 +9,6 @@ setup(
     description="This repo defines core classes of our trading applications.",
     author="Julius Kittler, August Andersen",
     license="",
-    python_requires=">=3.8"
+    python_requires="3.8.x"
 
 )
