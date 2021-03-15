@@ -13,10 +13,15 @@ from data.prep_data import PrepData
 
 
 class DataAlpacaPocCat(BaseFeatureData):
-    """Class used for fetching data from database for Alpaca POC.
+    """Class used for fetching data with categorical target for Alpaca POC.
 
     The data is daily data from Alphavantage, Yahoo and Finviz for USA tickers.
-    No feature engineering is conducted. Only preprocessing is conducted.
+    The target y consists of discretized daily price percentage changes (from the
+    previous day closing price to the next day closing price). Thereby, discretization
+    is conducted as defined by the get_data function arguments 'bins' and 'bin_labels'.
+    Feature engineering is only conducted in very limited way: OCHL time series from
+    Alphavantage are converted to features by computing daily price percentage changes
+    and then adding the last `n_ppc_per_row` price percentage changes as new columns.
     """
 
     def __init__(self, mongodbkey: str):
@@ -167,9 +172,9 @@ class DataAlpacaPocCat(BaseFeatureData):
     ]:
         """Method for getting data that can be passed to a model.
 
-        This function should fetch raw data, clean this data, conduct feature
-        engineering and split the data into predictors x and targets y. This function
-        should return feature data.
+        This function fetches pre-processed data from Alphavantage, Yahoo and Finviz,
+        merges this data by day and ticker, conducts basic feature engineering,
+        constructs the target variable y and then returns the data for x and y.
 
         Args:
             ticker_list: A list of ticker symbols for which to get data.
@@ -178,33 +183,36 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_end_required: Whether data for dt_end is required for a particular ticker
                 symbol. If dt_end_required is true, the returned data_dict will only
                 contain a key-value pair for a ticker if there is data available for
-                this ticker for the dt_end date.
+                this ticker for the dt_end date. Note: if you set return_training_dfs to
+                True and return_date_col to True, then you won't actually get any data
+                points for the dt_end. This is because the last observation is dropped
+                because it only has NA for y and is therefore not useful for training.
             n_ppc_per_row: Minimum number of price percentages changes per row. This
-                mainly affects the price data from alphavantage, based on which the
-                price percentage changes are computed (from day to day). Important:
-                this affects the number of dates required per ticker. Example: if
-                n_ppc_per_row is 10, then we need 10+2 dates (+2 because we need 1 date
-                in the beginning and end of a sequence of dates to compute percentage
-                changes).
+                mainly affects the price data from Alphavantage, based on which the
+                daily price percentage changes are computed. Important: this affects the
+                number of dates required per ticker. Example: if n_ppc_per_row is 10,
+                then there will only be data returned for a particular ticker if this
+                ticker has at least 10+2 dates of data available in the mongodb (+2 as
+                we need 1 date in the beginning and end of a sequence of dates to
+                compute percentage changes).
             return_last_date_only: Whether only data for the most recent available date
                 per ticker should be returned. If this is set to True, then return_y
                 is automatically set to False, i.e. y is never returned (since we do not
                 know the price percentage change from the last available date to the
                 next future date). You should set return_last_date_only to true when
                 making predictions during trading.
-            return_training_dfs: Whether data should be returned for model fitting or
+            return_training_dfs: Whether data should be returned for model training or
                 not. You will want to set return_training_dfs to True if you need a
                 dataset for model training, validation and testing. If set to True, the
                 data for all tickers is returned as tuple of data frames: (df_x, df_y).
-                You won't know, which row corresponds to which ticker (and date).
-                Moreover, rows with NA values for y will be dropped (i.e. the very last
-                row for each ticker will be dropped). If set to False, the data for all
-                tickers is returned as dictionary of tuples (df_x, df_y), where each key
-                value pair corresponds to a particular ticker symbol.
+                Rows with NA values for y will be dropped (i.e. the very last row for
+                each ticker will be dropped). If set to False, the data for all tickers
+                is returned as dictionary of tuples (df_x, df_y), where each key-value
+                pair corresponds to a particular ticker symbol.
             return_date_col: Whether or not the date column should be kept in df_x.
             return_ticker_col: Whether or not the ticker column should be kept in df_x.
-            bins: The bins for converting the numeric price percentage changes (the
-                target to be predicted) into a multi-class categorical variable.
+            bins: The bins for converting the numeric daily price percentage changes
+                (the target to be predicted) into a multi-class categorical variable.
             bin_labels: The labels given to the levels of the multi-class categorical
                 variable created according to the input argument 'bins'.
 
@@ -214,11 +222,11 @@ class DataAlpacaPocCat(BaseFeatureData):
                 one key-value pair for each ticker symbol. The key always represents the
                 ticker symbol. There is one key for each element in the input
                 ticker_list. Each value is a tuple of two pandas data frames x and y:
-                x of shape (n, m) and y of shape (n, d), where n is the number of
-                samples, m is the number of features and d is the number of target
-                variables. If return_training_dfs is True, the return type is
-                Tuple[pd.DataFrame, pd.DataFrame], a type of pandas data frames x and y.
-                Both data frames contain the data for all tickers and dates combined.
+                x of shape (n, m) and y of shape (n, 1), where n is the number of
+                samples, m is the number of features. If return_training_dfs is True,
+                the return type is Tuple[pd.DataFrame, pd.DataFrame], a tuple of pandas
+                data frames x and y. Both data frames contain the data for all tickers
+                and dates combined.
         """
         # Check inputs
         self._check_inputs(
