@@ -21,6 +21,8 @@ mypy = "^0.790"
 pydocstyle = "^5.1.1"
 darglint = "^1.5.8"
 pymongo = "*"
+mljar-supervised = "^0.9.1"
+jupyter = "*"
 
 [build-system]
 requires = ["poetry>=0.12"]
