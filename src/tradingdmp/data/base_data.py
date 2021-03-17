@@ -1,8 +1,8 @@
 """Base classes for data pipelines."""
 
+import datetime
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -20,11 +20,13 @@ class BaseFeatureData(ABC):
     def get_data(
         self,
         ticker_list: List[str],
-        dt_start: Optional[datetime] = None,
-        dt_end: Optional[datetime] = None,
+        dt_start: datetime.datetime,
+        dt_end: datetime.datetime,
         *args: Any,
         **kwargs: Any
-    ) -> Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]:
+    ) -> Union[
+        Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
+    ]:
         """Method for getting data that can be passed to a model.
 
         This function should fetch raw data, clean this data, conduct feature
@@ -43,12 +45,17 @@ class BaseFeatureData(ABC):
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            data_dict: a dictionary that contains one key-value pair for each
-                ticker symbol. The key always represents the ticker symbol. There is one
-                key for each element in the input ticker_list. Each value is a tuple of
+            data_dict: There are two options. Option A) must be implemented by default.
+                Option B) can optionally be implemented for convenience to get the data
+                in a format that is suitable for model fitting.
+                Option A): A dictionary that contains a key-value pair for each ticker
+                symbol. The key always represents the ticker symbol. There is one key
+                for each element in the input ticker_list. Each value is a tuple of
                 two pandas data frames x and y: x of shape (n, m) and y of shape (n, d),
                 where n is the number of samples, m is the number of features and d is
                 the number of target variables.
+                Option B): A tuple of two data frames x and y. These data frames contain
+                all data points for all dates and tickers.
 
         """
         pass
@@ -66,8 +73,8 @@ class BaseTimeData(ABC):
     def get_data(
         self,
         ticker_list: List[str],
-        dt_start: Optional[datetime] = None,
-        dt_end: Optional[datetime] = None,
+        dt_start: datetime.datetime,
+        dt_end: datetime.datetime,
         *args: Any,
         **kwargs: Any
     ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
