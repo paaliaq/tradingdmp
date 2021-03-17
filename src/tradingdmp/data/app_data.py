@@ -7,9 +7,8 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from dateutil.rrule import FR, MO, TH, TU, WE, WEEKLY, rrule
-
-from data.base_data import BaseFeatureData
-from data.prep_data import PrepData
+from tradingdmp.data.base_data import BaseFeatureData
+from tradingdmp.data.prep_data import PrepData
 
 
 class DataAlpacaPocCat(BaseFeatureData):
