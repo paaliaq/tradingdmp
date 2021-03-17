@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "tradingapp"
-version = "0.1.0"
+name = "tradingdmp"
+version = "0.4.0"
 description = ""
 authors = ["Julius Kittler", "August Andersen"]
 
