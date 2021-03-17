@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
-from data.raw_data import RawData
+from tradingdmp.data.raw_data import RawData
 
 
 class PrepData:
@@ -337,6 +337,39 @@ class PrepData:
             lambda group: group.interpolate(method="linear")
         )
         df = df.dropna(axis=0)
+
+        # Check data
+        self._check_data(df)
+
+        return df
+
+    def bors_data(
+        self,
+        ticker_list: List[str],
+        dt_start: datetime.date = datetime.datetime(2000, 1, 1),
+        dt_end: datetime.date = datetime.datetime.today(),
+        granularity: str = "yearly",
+    ) -> pd.DataFrame:
+        """Fetches processed data from bors-data based on time and ticker selection.
+
+        Example:
+            $ mongodbkey = "" # your mongodbkey
+            $ pdata = PrepData(mongodbkey)
+            $ data = pdata.bors_data(ticker_list = ["ABB", "AAB"])
+        """
+        # Get raw data from database
+        df = self.rd.bors_data(
+            ticker_list=ticker_list,
+            dt_start=dt_start,
+            dt_end=dt_end,
+            granularity=granularity,
+        )
+
+        # Sort by ticker and date and reset index
+        df = self._sort_data(df)
+
+        # Replace -9999 with NAN
+        df = df.replace(-9999, np.nan)
 
         # Check data
         self._check_data(df)
