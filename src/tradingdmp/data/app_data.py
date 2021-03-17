@@ -1,3 +1,4 @@
+# type: ignore
 """Application classes for data pipelines that are used in our trading apps."""
 
 import datetime
