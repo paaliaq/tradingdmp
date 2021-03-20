@@ -182,6 +182,7 @@ class PrepData:
             colnames = [
                 "ticker",
                 "date",
+                "minute",
                 "high",
                 "low",
                 "open",
