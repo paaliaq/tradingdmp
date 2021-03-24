@@ -7,20 +7,12 @@ meant to be used by our trading applications.
 
 ```
 ├── notebooks               <- Notebooks named like `YYYYMMDD-filename.ipynb`
-├── src                     <- Package of this project
-│   ├── data                <- Subpackage for data pipeline
-│   ├── models              <- Subpackage for models
-│   └── policy              <- Subpackage for policies
-│   └── utils               <- Subpackage for utility functions
-├── data                    <- Repository with data for development and testing.
-│   ├── raw                 <- The original, immutable data
-│   ├── interim             <- Intermediate data that has been transformed
-│   └── final               <- The final data sets for modeling
-├── models                  <- Trained and serialized models, model predictions, or model summaries
-├── reports                 <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   ├── figures             <- Generated graphics and figures to be used in reporting
-│   └── tables              <- Generated tables to be used in reporting
-├── references              <- Data dictionaries, manuals, and all other explanatory materials
+├── src                     <- Source code of this project
+│   ├── tradingdmp          <- Package of this project
+│      ├── data             <- Subpackage for data pipeline
+│      ├── model            <- Subpackage for models
+│      ├── policy           <- Subpackage for policies
+│      └── utils            <- Subpackage for utility functions
 ├── tests                   <- Unit tests for src/ and example tests for scripts/
 ├── docs                    <- A default Sphinx project; see sphinx-doc.org for details
 ├── .config                 <- All config.json files belong in this folder
@@ -36,5 +28,5 @@ meant to be used by our trading applications.
 The pipeline (`.gitlab-ci.yml`) also contains some checks to ensure code quality. You can run these checks locally with the following commands from the main directory. You can also run the commands separately if that's what you prefer.
 
 ```shell
-black --check src/ && flake8 src/ && mypy src/ && pydocstyle src/ && darglint src/
+poetry run black --check src/ && flake8 src/ && mypy src/ && pydocstyle src/ && darglint src/
 ```
