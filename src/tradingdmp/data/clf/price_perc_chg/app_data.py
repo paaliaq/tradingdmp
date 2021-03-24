@@ -1,4 +1,3 @@
-# type: ignore
 """Application classes for data pipelines that are used in our trading apps."""
 
 import datetime
@@ -8,8 +7,8 @@ from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from dateutil.rrule import FR, MO, TH, TU, WE, WEEKLY, rrule
-from tradingdmp.data.base_data import BaseFeatureData
-from tradingdmp.data.prep_data import PrepData
+from tradingdmp.data.clf.base_data import BaseFeatureData
+from tradingdmp.data.utils.prep_data import PrepData
 
 
 class DataAlpacaPocCat(BaseFeatureData):
@@ -34,13 +33,13 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
+        n_ppc_per_row: int,
     ) -> None:
         """Function to check standard inputs across all public data fetch functions."""
         # Type checks
@@ -49,13 +48,13 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_start,
             dt_end,
             dt_end_required,
-            n_ppc_per_row,
             return_last_date_only,
             return_training_dfs,
             return_date_col,
             return_ticker_col,
             bins,
             bin_labels,
+            n_ppc_per_row,
         )
 
         # Logical checks
@@ -64,13 +63,13 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_start,
             dt_end,
             dt_end_required,
-            n_ppc_per_row,
             return_last_date_only,
             return_training_dfs,
             return_date_col,
             return_ticker_col,
             bins,
             bin_labels,
+            n_ppc_per_row,
         )
 
     def _check_inputs_type(
@@ -79,13 +78,13 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
+        n_ppc_per_row: int,
     ) -> None:  # noqa: C901
         """Auxilary function to check that the input arguments have the correct type."""
         if not isinstance(ticker_list, list):
@@ -96,8 +95,6 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("dt_end must be of type datetime.")
         if not isinstance(dt_end_required, bool):
             raise ValueError("dt_end_required must be of type bool.")
-        if not isinstance(n_ppc_per_row, int):
-            raise ValueError("n_ppc_per_row must be of type int.")
         if not isinstance(return_last_date_only, bool):
             raise ValueError("return_last_date_only must be of type bool.")
         if not isinstance(return_training_dfs, bool):
@@ -110,6 +107,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("bins must be of type list.")
         if not isinstance(bin_labels, list):
             raise ValueError("bin_labels must be of type list.")
+        if not isinstance(n_ppc_per_row, int):
+            raise ValueError("n_ppc_per_row must be of type int.")
 
     def _check_inputs_logic(
         self,
@@ -117,28 +116,33 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        n_ppc_per_row: int,
         return_last_date_only: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
         bins: List[Any],
         bin_labels: List[str],
+        n_ppc_per_row: int,
     ) -> None:
-        """Auxilary function to check that the input arguments are logically correct."""
+        """Auxilary function to check that the input arguments are logically correct.
+
+        This function assumes that all checks from _check_inputs_type passed. This means
+        that _check_inputs_type must always be run before _check_inputs_logic.
+        """
         if not len(ticker_list) > 0:
             raise ValueError("ticker_list must not be empty.")
+        if not len(bins) >= 3:
+            raise ValueError("bins must contain at least 3 elements to form 2 classes.")
+        if not len(bins) == len(bin_labels) + 1:
+            raise ValueError("It is required that: len(bins) == len(bin_labels) + 1")
         timedelta_weekdays = rrule(
             WEEKLY, byweekday=(MO, TU, WE, TH, FR), dtstart=dt_start, until=dt_end
         ).count()  # type: ignore
         if not timedelta_weekdays >= n_ppc_per_row + 2:
             raise ValueError(
-                "No. of weekdays btw. dt_start and dt_end must be >= n_ppc_per_row+2."
+                "Number of weekdays btw. dt_start and dt_end must be "
+                ">= n_ppc_per_row+2."
             )
-        if not len(bins) >= 3:
-            raise ValueError("bins must contain at least 3 elements to form 2 classes.")
-        if not len(bins) == len(bin_labels) + 1:
-            raise ValueError("It is required that: len(bins) == len(bin_labels) + 1")
 
     def _check_data(self, df_x: pd.DataFrame) -> None:
         """Function to check that the data meets all our requirements."""
@@ -160,13 +164,13 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool = False,
-        n_ppc_per_row: int = 10,
         return_last_date_only: bool = False,
         return_training_dfs: bool = False,
         return_date_col: bool = False,
         return_ticker_col: bool = False,
         bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
         bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
+        **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
     ]:
@@ -187,14 +191,6 @@ class DataAlpacaPocCat(BaseFeatureData):
                 True and return_date_col to True, then you won't actually get any data
                 points for the dt_end. This is because the last observation is dropped
                 because it only has NA for y and is therefore not useful for training.
-            n_ppc_per_row: Minimum number of price percentages changes per row. This
-                mainly affects the price data from Alphavantage, based on which the
-                daily price percentage changes are computed. Important: this affects the
-                number of dates required per ticker. Example: if n_ppc_per_row is 10,
-                then there will only be data returned for a particular ticker if this
-                ticker has at least 10+2 dates of data available in the mongodb (+2 as
-                we need 1 date in the beginning and end of a sequence of dates to
-                compute percentage changes).
             return_last_date_only: Whether only data for the most recent available date
                 per ticker should be returned. If this is set to True, then return_y
                 is automatically set to False, i.e. y is never returned (since we do not
@@ -211,13 +207,23 @@ class DataAlpacaPocCat(BaseFeatureData):
                 pair corresponds to a particular ticker symbol.
             return_date_col: Whether or not the date column should be kept in df_x.
             return_ticker_col: Whether or not the ticker column should be kept in df_x.
-            bins: The bins for converting the numeric daily price percentage changes
-                (the target to be predicted) into a multi-class categorical variable.
-            bin_labels: The labels given to the levels of the multi-class categorical
-                variable created according to the input argument 'bins'.
+            bins: The bins for converting the original continuous target (e.g. price
+                percentage change) into a discrete target y (with at least 2 levels).
+            bin_labels: The labels given to the levels of the discrete target y, which
+                was created according to the input argument 'bins'.
+            **kwargs: This is a dictionary which can contain the following keys:
+                - n_ppc_per_row (int): An integer defaulting to 10. It represents the
+                    minimum number of price percentages changes per row. This mainly
+                    affects the price data from Alphavantage, based on which the daily
+                    price percentage changes are computed. Important: this affects the
+                    number of dates required per ticker. Example: if n_ppc_per_row is
+                    10, then there will only be data returned for a particular ticker if
+                    this ticker has at least 10+2 dates of data available in the mongodb
+                    (+2 asnwe need 1 date in the beginning and end of a sequence of
+                    dates to compute percentage changes).
 
         Returns:
-            data_dict: If return_training_dfs is False, the return type is
+            data: If return_training_dfs is False, the return type is
                 Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], a dictionary that contains
                 one key-value pair for each ticker symbol. The key always represents the
                 ticker symbol. There is one key for each element in the input
@@ -228,19 +234,25 @@ class DataAlpacaPocCat(BaseFeatureData):
                 data frames x and y. Both data frames contain the data for all tickers
                 and dates combined.
         """
+        # Initialize default kwargs if necessary
+        if "n_ppc_per_row" not in kwargs:
+            n_ppc_per_row = 10
+
         # Check inputs
         self._check_inputs(
+            # Non-kwargs
             ticker_list=ticker_list,
             dt_start=dt_start,
             dt_end=dt_end,
             dt_end_required=dt_end_required,
-            n_ppc_per_row=n_ppc_per_row,
             return_last_date_only=return_last_date_only,
             return_training_dfs=return_training_dfs,
             return_date_col=return_date_col,
             return_ticker_col=return_ticker_col,
             bins=bins,
             bin_labels=bin_labels,
+            # Kwargs
+            n_ppc_per_row=n_ppc_per_row,
         )
 
         # Get data
