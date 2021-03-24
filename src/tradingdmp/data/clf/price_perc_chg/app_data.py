@@ -237,6 +237,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         # Initialize default kwargs if necessary
         if "n_ppc_per_row" not in kwargs:
             n_ppc_per_row = 10
+        else:
+            n_ppc_per_row = kwargs["n_ppc_per_row"]
 
         # Check inputs
         self._check_inputs(
