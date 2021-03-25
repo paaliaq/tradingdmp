@@ -22,17 +22,15 @@ class RawData:
         """Function to check standard inputs across all public data fetch functions."""
         # Type checks
         if not isinstance(dt_start, datetime.datetime):
-            raise TypeError("dt_start must be of type datetime!")
-
+            raise TypeError("dt_start must be of type datetime.")
         if not isinstance(dt_end, datetime.datetime):
-            raise TypeError("dt_end must be of type datetime!")
-
+            raise TypeError("dt_end must be of type datetime.")
         if not isinstance(ticker_list, list):
-            raise TypeError("ticker_list must be of type list!")
+            raise TypeError("ticker_list must be of type list.")
 
         # Logical checks
         if dt_start > dt_end:
-            raise ValueError("dt_start must be less than dt_end!")
+            raise ValueError("dt_start must be less than dt_end.")
 
     def _adjust_inputs(
         self,
@@ -66,21 +64,23 @@ class RawData:
                 continue
 
         # Set index
-        df.set_index("_id", inplace=True)
+        if not df.empty:
+            df.set_index("_id", inplace=True)
 
         return df
 
     def _check_data(self, df: pd.DataFrame) -> None:
         """Function to check that the data meets all our requirements."""
-        # Check that required columns exist
-        if "date" not in df.columns:
-            raise ValueError("df must be contain a 'date' column!")
-        if "ticker" not in df.columns:
-            raise ValueError("df must be contain a 'ticker' column!")
+        if not df.empty:
+            # Check that required columns exist
+            if "date" not in df.columns:
+                raise ValueError("df must be contain a 'date' column.")
+            if "ticker" not in df.columns:
+                raise ValueError("df must be contain a 'ticker' column.")
 
-        # Check that index is _id
-        if df.index.name != "_id":
-            raise ValueError("df index must be '_id'!")
+            # Check that index is _id
+            if df.index.name != "_id":
+                raise ValueError("df index must be '_id'.")
 
     def usa_alphavantage_eod(
         self,
@@ -106,8 +106,8 @@ class RawData:
         time_key = "date"
         condition = {
             time_key: {
-                "$gte": dt_start.strftime("%Y-%m-%dT%X+00:00"),
-                "$lte": dt_end.strftime("%Y-%m-%dT%X+00:00"),
+                "$gte": dt_start.strftime("%Y%m%d"),
+                "$lte": dt_end.strftime("%Y%m%d"),
             }
         }
 
@@ -144,8 +144,8 @@ class RawData:
         time_key = "date"
         condition = {
             time_key: {
-                "$gte": dt_start.strftime("%Y-%m-%dT%X+00:00"),
-                "$lte": dt_end.strftime("%Y-%m-%dT%X+00:00"),
+                "$gte": dt_start.strftime("%Y%m%d"),
+                "$lte": dt_end.strftime("%Y%m%d"),
             }
         }
 
@@ -182,8 +182,8 @@ class RawData:
         time_key = "date"
         condition = {
             time_key: {
-                "$gte": dt_start.strftime("%Y-%m-%dT%X+00:00"),
-                "$lte": dt_end.strftime("%Y-%m-%dT%X+00:00"),
+                "$gte": dt_start.strftime("%Y%m%d"),
+                "$lte": dt_end.strftime("%Y%m%d"),
             }
         }
 
@@ -220,16 +220,14 @@ class RawData:
         time_key = "date"
         condition = {
             time_key: {
-                "$gte": dt_start.strftime("%Y-%m-%dT%X+00:00"),
-                "$lte": dt_end.strftime("%Y-%m-%dT%X+00:00"),
+                "$gte": dt_start.strftime("%Y%m%d"),
+                "$lte": dt_end.strftime("%Y%m%d"),
             }
         }
 
         # Fetch data
         db = self.client[db_name]
         df = self._get_data(db, condition, ticker_list)
-
-        print(df.columns)
 
         # Check data
         self._check_data(df)
