@@ -1,1 +1,1 @@
-"""The :mod:`src.data.reg` contains data processing for cases where y is continuous."""
+"""The `src.data.reg` package contains data processing for cases with continuous y."""
