@@ -1,1 +1,1 @@
-"""The :mod:`src.data.clf` contains data processing for cases where y is discrete."""
+"""The `src.data.clf` package contains data processing for cases with discrete y."""

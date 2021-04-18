@@ -1,1 +1,1 @@
-"""The :mod:`src.data.utils` contains data processing utility functions and classes."""
+"""The `src.data.utils` package contains utilities for data processing."""
