@@ -8,11 +8,11 @@ meant to be used by our trading applications.
 ```
 ├── notebooks               <- Notebooks named like `YYYYMMDD-filename.ipynb`
 ├── src                     <- Source code of this project
-│   ├── tradingdmp          <- Package of this project
-│      ├── data             <- Subpackage for data pipeline
-│      ├── model            <- Subpackage for models
-│      ├── policy           <- Subpackage for policies
-│      └── utils            <- Subpackage for utility functions
+│   └─┰── tradingdmp        <- Package of this project
+│     ├── data              <- Subpackage for data pipeline
+│     ├── model             <- Subpackage for models
+│     ├── policy            <- Subpackage for policies
+│     └── utils             <- Subpackage for utility functions
 ├── tests                   <- Unit tests for src/ and example tests for scripts/
 ├── docs                    <- A default Sphinx project; see sphinx-doc.org for details
 ├── .config                 <- All config.json files belong in this folder
