@@ -72,10 +72,13 @@ class DataIBPocReg(BaseFeatureData):
             ticker_list: A list of ticker symbols for which to get data.
             dt_start: All data after incl. dt_start is fetched.
             dt_end: All data until incl. dt_end is fetched.
+            history_len_daily: length of daily history sequence as features.
+            history_len_quarterly: length of quarterly history sequence as features.
+            history_len_yearly: length of yearly history sequence as features.
             **kwargs
 
         Returns:
-            data: If return_training_dfs is False, the return type is
+            complete_df: Return a Dataframe with all tickers training data.
 
         """
         self._check_inputs_type(ticker_list, dt_start, dt_end)
