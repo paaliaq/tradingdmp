@@ -75,11 +75,9 @@ class DataIBPocReg(BaseFeatureData):
             history_len_daily: length of daily history sequence as features.
             history_len_quarterly: length of quarterly history sequence as features.
             history_len_yearly: length of yearly history sequence as features.
-            **kwargs
 
         Returns:
             complete_df: Return a Dataframe with all tickers training data.
-
         """
         self._check_inputs_type(ticker_list, dt_start, dt_end)
 
