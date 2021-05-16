@@ -12,6 +12,7 @@ pymongo = "^3.11"
 requests = "^2.25.1"
 pytz = "^2021.1"
 mljar-supervised = "^0.10.3"
+mlflow = "^1.17.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

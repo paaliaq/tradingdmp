@@ -5,9 +5,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from mlflow.pyfunc import PythonModel, PythonModelContext
 
 
-class BaseFeatureModel(ABC):
+class BaseFeatureModel(ABC, PythonModel):
     """Base class for feature based modeling.
 
     The main difference between BaseFeatureModel and BaseTimeModel is that
@@ -36,13 +37,17 @@ class BaseFeatureModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, x: pd.DataFrame, *args: Any, **kwargs: Any) -> np.ndarray:
+    def predict(
+        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
+    ) -> np.ndarray:
         """Method for predicting classes with a fitted model.
 
         This function should predict with a model given test data x. This data
         should be feature data, i.e. it should come from BaseFeatureData.
 
         Args:
+            context: A PythonModelContext instance containing artifacts that the model
+                can use to perform inference.
             x: Test features in data frame of shape (n, m), where n is the number of
                 samples and m is the number of features.
             *args: Variable length argument list.
@@ -55,13 +60,17 @@ class BaseFeatureModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, x: pd.DataFrame, *args: Any, **kwargs: Any) -> np.ndarray:
+    def predict_proba(
+        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
+    ) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
         This function should predict with a model given test data x. This data
         should be feature data, i.e. it should come from BaseFeatureData.
 
         Args:
+            context: A PythonModelContext instance containing artifacts that the model
+                can use to perform inference.
             x: Test features in data frame of shape (n, m), where n is the number of
                 samples and m is the number of features.
             *args: Variable length argument list.
@@ -75,7 +84,7 @@ class BaseFeatureModel(ABC):
         pass
 
 
-class BaseTimeModel(ABC):
+class BaseTimeModel(ABC, PythonModel):
     """Base class for timeseries based modeling.
 
     The main difference between BaseFeatureModel and BaseTimeModel is that
@@ -105,13 +114,17 @@ class BaseTimeModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, x: np.ndarray, *args: Any, **kwargs: Any) -> np.ndarray:
+    def predict(
+        self, context: PythonModelContext, x: np.ndarray, *args: Any, **kwargs: Any
+    ) -> np.ndarray:
         """Method for predicting classes with a fitted model.
 
         This function should predict with a model given test data x. This data
         should be timeseries data, i.e. it should come from BaseTimeData.
 
         Args:
+            context: A PythonModelContext instance containing artifacts that the model
+                can use to perform inference.
             x: Test features in numpy array of shape (n, t, m), where n is the
                 number of samples, t is the number of timesteps per sample, and m is
                 the number of features.
@@ -125,13 +138,17 @@ class BaseTimeModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, x: pd.DataFrame, *args: Any, **kwargs: Any) -> np.ndarray:
+    def predict_proba(
+        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
+    ) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
         This function should predict with a model given test data x. This data
         should be feature data, i.e. it should come from BaseFeatureData.
 
         Args:
+            context: A PythonModelContext instance containing artifacts that the model
+                can use to perform inference.
             x: Test features in numpy array of shape (n, t, m), where n is the
                 number of samples, t is the number of timesteps per sample, and m is
                 the number of features.
