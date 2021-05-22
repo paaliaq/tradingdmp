@@ -123,7 +123,7 @@ class BaseFeatureData(ABC):
                 return_ticker_col=return_ticker_col,
                 bins=bins,
                 bin_labels=bin_labels,
-                **kwargs
+                kwargs=kwargs,
             )
             with open(filepath, "wb") as f:
                 pickle.dump(data, f)
@@ -220,7 +220,6 @@ class BaseTimeData(ABC):
         ticker_list: List[str],
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
-        *args: Any,
         **kwargs: Any
     ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
         """Method for getting data that can be passed to a model.
@@ -245,7 +244,6 @@ class BaseTimeData(ABC):
             dt_end: All data until incl. dt_end is fetched.
                 By default, dt_end is None, which means that data is fetched
                 until the last the available datetime.
-            *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
@@ -274,8 +272,7 @@ class BaseTimeData(ABC):
                 ticker_list=ticker_list,
                 dt_start=dt_start,
                 dt_end=dt_end,
-                *args,
-                **kwargs
+                kwargs=kwargs,
             )
             with open(filepath, "wb") as f:
                 pickle.dump(data, f)
@@ -287,7 +284,6 @@ class BaseTimeData(ABC):
         ticker_list: List[str],
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
-        *args: Any,
         **kwargs: Any
     ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
         """Method for getting data that can be passed to a model.
@@ -304,7 +300,6 @@ class BaseTimeData(ABC):
             dt_end: All data until incl. dt_end is fetched.
                 By default, dt_end is None, which means that data is fetched
                 until the last the available datetime.
-            *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
