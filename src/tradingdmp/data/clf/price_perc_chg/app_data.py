@@ -133,7 +133,7 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("ticker_list must not be empty.")
         if not len(bins) >= 3:
             raise ValueError("bins must contain at least 3 elements to form 2 classes.")
-        if not len(bins) == len(bin_labels) + 1:
+        if not len(bins) + 1 == len(bin_labels):
             raise ValueError("It is required that: len(bins) == len(bin_labels) + 1")
         timedelta_weekdays = rrule(
             WEEKLY, byweekday=(MO, TU, WE, TH, FR), dtstart=dt_start, until=dt_end
@@ -168,8 +168,14 @@ class DataAlpacaPocCat(BaseFeatureData):
         return_training_dfs: bool = False,
         return_date_col: bool = False,
         return_ticker_col: bool = False,
-        bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
-        bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
+        bins: List[Any] = [-0.03, -0.01, 0.01, 0.03],
+        bin_labels: List[str] = [
+            "0_lg_dec",
+            "1_sm_dec",
+            "2_no_chg",
+            "3_sm_inc",
+            "4_lg_inc",
+        ],
         **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
@@ -256,6 +262,9 @@ class DataAlpacaPocCat(BaseFeatureData):
             # Kwargs
             n_ppc_per_row=n_ppc_per_row,
         )
+
+        # Adjust other variables
+        bins = [-np.inf] + bins + [np.inf]
 
         # Get data
         df_all = pd.DataFrame()

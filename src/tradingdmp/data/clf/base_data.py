@@ -28,8 +28,14 @@ class BaseFeatureData(ABC):
         return_training_dfs: bool = False,
         return_date_col: bool = False,
         return_ticker_col: bool = False,
-        bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
-        bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
+        bins: List[Any] = [-0.03, -0.01, 0.01, 0.03],
+        bin_labels: List[str] = [
+            "0_lg_dec",
+            "1_sm_dec",
+            "2_no_chg",
+            "3_sm_inc",
+            "4_lg_inc",
+        ],
         **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
@@ -140,8 +146,14 @@ class BaseFeatureData(ABC):
         return_training_dfs: bool = False,
         return_date_col: bool = False,
         return_ticker_col: bool = False,
-        bins: List[Any] = [-np.inf, -0.03, -0.01, 0.01, 0.03, np.inf],
-        bin_labels: List[str] = ["lg_dec", "sm_dec", "no_chg", "sm_inc", "lg_inc"],
+        bins: List[Any] = [-0.03, -0.01, 0.01, 0.03],
+        bin_labels: List[str] = [
+            "0_lg_dec",
+            "1_sm_dec",
+            "2_no_chg",
+            "3_sm_inc",
+            "4_lg_inc",
+        ],
         **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
