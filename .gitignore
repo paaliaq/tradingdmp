@@ -91,3 +91,7 @@ target/
 
 # Poetry
 poetry.lock
+
+# Pickle
+*.pkl
+*.json
