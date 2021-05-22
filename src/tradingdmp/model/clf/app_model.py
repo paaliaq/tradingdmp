@@ -101,9 +101,7 @@ class MljarAutoMl(BaseFeatureModel):
         """
         self.model.fit(x, y)
 
-    def predict(
-        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
-    ) -> np.ndarray:
+    def predict(self, context: PythonModelContext, x: pd.DataFrame) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
         This function should predict with a model given test data x. This data
@@ -114,8 +112,6 @@ class MljarAutoMl(BaseFeatureModel):
                 can use to perform inference.
             x: Test features in data frame of shape (n, m), where n is the number of
                 samples and m is the number of features.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
 
         Returns:
             y: Predicted targets in a numpy array of shape (n, d), where n is the number
