@@ -40,29 +40,6 @@ class BaseFeatureModel(ABC, PythonModel):
     def predict(
         self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> np.ndarray:
-        """Method for predicting classes with a fitted model.
-
-        This function should predict with a model given test data x. This data
-        should be feature data, i.e. it should come from BaseFeatureData.
-
-        Args:
-            context: A PythonModelContext instance containing artifacts that the model
-                can use to perform inference.
-            x: Test features in data frame of shape (n, m), where n is the number of
-                samples and m is the number of features.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            y: Predicted targets in a numpy array of shape (n, 1), where n is the number
-                of samples. y will contain predicted classes in string format.
-        """
-        pass
-
-    @abstractmethod
-    def predict_proba(
-        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
-    ) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
         This function should predict with a model given test data x. This data
@@ -116,30 +93,6 @@ class BaseTimeModel(ABC, PythonModel):
     @abstractmethod
     def predict(
         self, context: PythonModelContext, x: np.ndarray, *args: Any, **kwargs: Any
-    ) -> np.ndarray:
-        """Method for predicting classes with a fitted model.
-
-        This function should predict with a model given test data x. This data
-        should be timeseries data, i.e. it should come from BaseTimeData.
-
-        Args:
-            context: A PythonModelContext instance containing artifacts that the model
-                can use to perform inference.
-            x: Test features in numpy array of shape (n, t, m), where n is the
-                number of samples, t is the number of timesteps per sample, and m is
-                the number of features.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            y: Predicted targets in a numpy array of shape (n, 1), where n is the number
-                of samples. y will contain predicted classes in string format.
-        """
-        pass
-
-    @abstractmethod
-    def predict_proba(
-        self, context: PythonModelContext, x: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
