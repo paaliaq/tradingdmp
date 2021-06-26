@@ -4,7 +4,6 @@ from typing import Any, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from mlflow.pyfunc import PythonModelContext
 from supervised.automl import AutoML
 from tradingdmp.model.clf.base_model import BaseFeatureModel
 
@@ -101,15 +100,13 @@ class MljarAutoMl(BaseFeatureModel):
         """
         self.model.fit(x, y)
 
-    def predict(self, context: PythonModelContext, x: pd.DataFrame) -> np.ndarray:
+    def predict(self, x: pd.DataFrame) -> np.ndarray:
         """Method for predicting class probabilities with a fitted model.
 
         This function should predict with a model given test data x. This data
         should be feature data, i.e. it should come from BaseFeatureData.
 
         Args:
-            context: A PythonModelContext instance containing artifacts that the model
-                can use to perform inference.
             x: Test features in data frame of shape (n, m), where n is the number of
                 samples and m is the number of features.
 
