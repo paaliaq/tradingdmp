@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 setup(
     name="tradingdmp",
     packages=find_packages(),
-    version="0.8.1",
+    version="0.8.2",
     description="This repo defines core classes of our trading applications.",
     author="Julius Kittler, August Andersen",
     license="",
