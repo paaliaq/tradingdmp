@@ -23,7 +23,7 @@ application-lint-flake8:
 application-lint-mypy:
   stage: lint
   script:
-    - pip install mypy
+    - pip install mypy==0.790
     - mypy src/
 
 application-lint-pydocstyle:
