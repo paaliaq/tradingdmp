@@ -128,9 +128,13 @@ class PrepData:
             df = df.replace(-9999, np.nan)
 
             # Replace NAN by ticker
-            df = df.groupby("ticker").apply(
-                lambda group: group.interpolate(method="linear")
+            df_temp = (
+                df.drop(columns=["date"])
+                .groupby("ticker")
+                .apply(lambda group: group.interpolate(fill="linear"))
             )
+            df_temp.loc[:, "date"] = df.loc[:, "date"]
+            df = df_temp.loc[:, df.columns]
             df = df.dropna(axis=0)
 
         # Check data
@@ -210,9 +214,13 @@ class PrepData:
             df = df.replace(-9999, np.nan)
 
             # Replace NAN by ticker
-            df = df.groupby("ticker").apply(
-                lambda group: group.interpolate(method="linear")
+            df_temp = (
+                df.drop(columns=["date"])
+                .groupby("ticker")
+                .apply(lambda group: group.interpolate(fill="linear"))
             )
+            df_temp.loc[:, "date"] = df.loc[:, "date"]
+            df = df_temp.loc[:, df.columns]
             df = df.dropna(axis=0)
 
         # Check data
@@ -306,9 +314,13 @@ class PrepData:
             df = df.replace(-9999, np.nan)
 
             # Replace NAN by ticker
-            df = df.groupby("ticker").apply(
-                lambda group: group.interpolate(method="linear")
+            df_temp = (
+                df.drop(columns=["date"])
+                .groupby("ticker")
+                .apply(lambda group: group.interpolate(fill="linear"))
             )
+            df_temp.loc[:, "date"] = df.loc[:, "date"]
+            df = df_temp.loc[:, df.columns]
             df = df.dropna(axis=0)
 
         # Check data
@@ -474,9 +486,13 @@ class PrepData:
             df = df.replace(-9999, np.nan)
 
             # Replace NAN by ticker
-            df = df.groupby("ticker").apply(
-                lambda group: group.interpolate(method="linear")
+            df_temp = (
+                df.drop(columns=["date"])
+                .groupby("ticker")
+                .apply(lambda group: group.interpolate(fill="linear"))
             )
+            df_temp.loc[:, "date"] = df.loc[:, "date"]
+            df = df_temp.loc[:, df.columns]
             df = df.dropna(axis=0)
 
         # Check data
