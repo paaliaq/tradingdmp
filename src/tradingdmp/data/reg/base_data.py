@@ -118,8 +118,6 @@ class BaseFeatureData(ABC):
                 return_training_dfs=return_training_dfs,
                 return_date_col=return_date_col,
                 return_ticker_col=return_ticker_col,
-                bins=bins,
-                bin_labels=bin_labels,
                 kwargs=kwargs,
             )
             with open(filepath, "wb") as f:
