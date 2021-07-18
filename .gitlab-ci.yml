@@ -4,9 +4,6 @@ stages:
   - lint
   - test
   - publish
-  
-include:
-  - template: Code-Quality.gitlab-ci.yml
 
 application-lint-black:
   stage: lint
@@ -47,8 +44,3 @@ application-publish:
     - poetry publish -r paaliaq --build -u gitlab-ci-token -p ${CI_JOB_TOKEN}
   rules:
     - if: '$CI_COMMIT_TAG'
-
-code_quality:
-  stage: lint
-  artifacts:
-    paths: [gl-code-quality-report.json]
