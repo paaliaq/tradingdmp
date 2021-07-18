@@ -23,13 +23,12 @@ class BaseFeatureData(ABC):
         ticker_list: List[str],
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
-        dt_end_required: bool,
-        return_last_date_only: bool,
-        return_training_dfs: bool,
-        return_date_col: bool,
-        return_ticker_col: bool,
-        bins: List[Any],
-        bin_labels: List[str],
+        dt_end_required: bool = False,
+        return_last_date: bool = False,
+        return_nonlast_dates: bool = True,
+        return_training_dfs: bool = False,
+        return_date_col: bool = False,
+        return_ticker_col: bool = False,
         **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
@@ -55,30 +54,27 @@ class BaseFeatureData(ABC):
             dt_end_required: Whether data for dt_end is required for a particular ticker
                 symbol. If dt_end_required is true, the returned data_dict will only
                 contain a key-value pair for a ticker if there is data available for
-                this ticker for the dt_end date. Note: if you set return_training_dfs to
-                True and return_date_col to True, then you won't actually get any data
-                points for the dt_end. This is because the last observation is dropped
-                because it only has NA for y and is therefore not useful for training.
-            return_last_date_only: Whether only data for the most recent available date
-                per ticker should be returned. If this is set to True, then return_y
-                is automatically set to False, i.e. y is never returned (since we do not
-                know the price percentage change from the last available date to the
-                next future date). You should set return_last_date_only to true when
-                making predictions during trading.
-            return_training_dfs: Whether data should be returned for model training or
-                not. You will want to set return_training_dfs to True if you need a
-                dataset for model training, validation and testing. If set to True, the
-                data for all tickers is returned as tuple of data frames: (df_x, df_y).
-                Rows with NA values for y will be dropped (i.e. the very last row for
-                each ticker will be dropped). If set to False, the data for all tickers
+                this ticker for the dt_end date.
+            return_last_date: Whether data for the most recent available date
+                per ticker should be returned. This data will have an NA value for the y
+                since the future value is not given yet. You should set return_last_date
+                to true if you want to make predictions during trading and you should
+                set it to false when you want to train a model in order to filter out
+                rows with missing y.
+            return_nonlast_dates: Whether data for the date before the most recent
+                available date per ticker should be returned. This data will have valid
+                y values for each observation (i.e. no NA). You should set
+                return_nonlast_dates to true if you want to train a model and to false
+                when you just want to make predictions during trading.
+            return_training_dfs: Whether all data should be returned as a single data
+                frame or not. You will want to set return_training_dfs to True if you
+                need a data set for model training, validation and testing.
+                If set to True, the data for all tickers is returned as tuple of data
+                frames: (df_x, df_y). If set to False, the data for all tickers
                 is returned as dictionary of tuples (df_x, df_y), where each key-value
                 pair corresponds to a particular ticker symbol.
             return_date_col: Whether or not the date column should be kept in df_x.
             return_ticker_col: Whether or not the ticker column should be kept in df_x.
-            bins: The bins for converting the original continuous target (e.g. price
-                percentage change) into a discrete target y (with at least 2 levels).
-            bin_labels: The labels given to the levels of the discrete target y, which
-                was created according to the input argument 'bins'.
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
@@ -117,12 +113,11 @@ class BaseFeatureData(ABC):
                 dt_start=dt_start,
                 dt_end=dt_end,
                 dt_end_required=dt_end_required,
-                return_last_date_only=return_last_date_only,
+                return_last_date=return_last_date,
+                return_nonlast_dates=return_nonlast_dates,
                 return_training_dfs=return_training_dfs,
                 return_date_col=return_date_col,
                 return_ticker_col=return_ticker_col,
-                bins=bins,
-                bin_labels=bin_labels,
                 kwargs=kwargs,
             )
             with open(filepath, "wb") as f:
@@ -135,13 +130,12 @@ class BaseFeatureData(ABC):
         ticker_list: List[str],
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
-        dt_end_required: bool,
-        return_last_date_only: bool,
-        return_training_dfs: bool,
-        return_date_col: bool,
-        return_ticker_col: bool,
-        bins: List[Any],
-        bin_labels: List[str],
+        dt_end_required: bool = False,
+        return_last_date: bool = False,
+        return_nonlast_dates: bool = True,
+        return_training_dfs: bool = False,
+        return_date_col: bool = False,
+        return_ticker_col: bool = False,
         **kwargs: Any
     ) -> Union[
         Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
@@ -159,30 +153,27 @@ class BaseFeatureData(ABC):
             dt_end_required: Whether data for dt_end is required for a particular ticker
                 symbol. If dt_end_required is true, the returned data_dict will only
                 contain a key-value pair for a ticker if there is data available for
-                this ticker for the dt_end date. Note: if you set return_training_dfs to
-                True and return_date_col to True, then you won't actually get any data
-                points for the dt_end. This is because the last observation is dropped
-                because it only has NA for y and is therefore not useful for training.
-            return_last_date_only: Whether only data for the most recent available date
-                per ticker should be returned. If this is set to True, then return_y
-                is automatically set to False, i.e. y is never returned (since we do not
-                know the price percentage change from the last available date to the
-                next future date). You should set return_last_date_only to true when
-                making predictions during trading.
-            return_training_dfs: Whether data should be returned for model training or
-                not. You will want to set return_training_dfs to True if you need a
-                dataset for model training, validation and testing. If set to True, the
-                data for all tickers is returned as tuple of data frames: (df_x, df_y).
-                Rows with NA values for y will be dropped (i.e. the very last row for
-                each ticker will be dropped). If set to False, the data for all tickers
+                this ticker for the dt_end date.
+            return_last_date: Whether data for the most recent available date
+                per ticker should be returned. This data will have an NA value for the y
+                since the future value is not given yet. You should set return_last_date
+                to true if you want to make predictions during trading and you should
+                set it to false when you want to train a model in order to filter out
+                rows with missing y.
+            return_nonlast_dates: Whether data for the date before the most recent
+                available date per ticker should be returned. This data will have valid
+                y values for each observation (i.e. no NA). You should set
+                return_nonlast_dates to true if you want to train a model and to false
+                when you just want to make predictions during trading.
+            return_training_dfs: Whether all data should be returned as a single data
+                frame or not. You will want to set return_training_dfs to True if you
+                need a data set for model training, validation and testing.
+                If set to True, the data for all tickers is returned as tuple of data
+                frames: (df_x, df_y). If set to False, the data for all tickers
                 is returned as dictionary of tuples (df_x, df_y), where each key-value
                 pair corresponds to a particular ticker symbol.
             return_date_col: Whether or not the date column should be kept in df_x.
             return_ticker_col: Whether or not the ticker column should be kept in df_x.
-            bins: The bins for converting the original continuous target (e.g. price
-                percentage change) into a discrete target y (with at least 2 levels).
-            bin_labels: The labels given to the levels of the discrete target y, which
-                was created according to the input argument 'bins'.
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
