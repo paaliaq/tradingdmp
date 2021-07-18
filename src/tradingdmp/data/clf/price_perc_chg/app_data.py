@@ -14,7 +14,7 @@ from tradingdmp.data.utils.prep_data import PrepData
 class DataAlpacaPocCat(BaseFeatureData):
     """Class used for fetching data with categorical target for Alpaca POC.
 
-    The data is daily data from Alphavantage, Yahoo and Finviz for USA tickers.
+    The data is daily data from Alphavantage and Finviz for USA tickers.
     The target y consists of discretized daily price percentage changes (from the
     previous day closing price to the next day closing price). Thereby, discretization
     is conducted as defined by the get_data function arguments 'bins' and 'bin_labels'.
@@ -33,7 +33,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        return_last_date_only: bool,
+        return_last_date: bool,
+        return_nonlast_dates: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
@@ -48,7 +49,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_start,
             dt_end,
             dt_end_required,
-            return_last_date_only,
+            return_last_date,
+            return_nonlast_dates,
             return_training_dfs,
             return_date_col,
             return_ticker_col,
@@ -63,7 +65,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_start,
             dt_end,
             dt_end_required,
-            return_last_date_only,
+            return_last_date,
+            return_nonlast_dates,
             return_training_dfs,
             return_date_col,
             return_ticker_col,
@@ -78,7 +81,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        return_last_date_only: bool,
+        return_last_date: bool,
+        return_nonlast_dates: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
@@ -95,8 +99,10 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("dt_end must be of type datetime.")
         if not isinstance(dt_end_required, bool):
             raise ValueError("dt_end_required must be of type bool.")
-        if not isinstance(return_last_date_only, bool):
-            raise ValueError("return_last_date_only must be of type bool.")
+        if not isinstance(return_last_date, bool):
+            raise ValueError("return_last_date must be of type bool.")
+        if not isinstance(return_nonlast_dates, bool):
+            raise ValueError("return_nonlast_dates must be of type bool.")
         if not isinstance(return_training_dfs, bool):
             raise ValueError("return_training_dfs must be of type bool.")
         if not isinstance(return_date_col, bool):
@@ -116,7 +122,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool,
-        return_last_date_only: bool,
+        return_last_date: bool,
+        return_nonlast_dates: bool,
         return_training_dfs: bool,
         return_date_col: bool,
         return_ticker_col: bool,
@@ -164,7 +171,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         dt_start: datetime.datetime,
         dt_end: datetime.datetime,
         dt_end_required: bool = False,
-        return_last_date_only: bool = False,
+        return_last_date: bool = False,
+        return_nonlast_dates: bool = True,
         return_training_dfs: bool = False,
         return_date_col: bool = False,
         return_ticker_col: bool = False,
@@ -182,7 +190,7 @@ class DataAlpacaPocCat(BaseFeatureData):
     ]:
         """Method for getting data that can be passed to a model.
 
-        This function fetches pre-processed data from Alphavantage, Yahoo and Finviz,
+        This function fetches pre-processed data from Alphavantage and Finviz,
         merges this data by day and ticker, conducts basic feature engineering,
         constructs the target variable y and then returns the data for x and y.
 
@@ -193,22 +201,23 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_end_required: Whether data for dt_end is required for a particular ticker
                 symbol. If dt_end_required is true, the returned data_dict will only
                 contain a key-value pair for a ticker if there is data available for
-                this ticker for the dt_end date. Note: if you set return_training_dfs to
-                True and return_date_col to True, then you won't actually get any data
-                points for the dt_end. This is because the last observation is dropped
-                because it only has NA for y and is therefore not useful for training.
-            return_last_date_only: Whether only data for the most recent available date
-                per ticker should be returned. If this is set to True, then return_y
-                is automatically set to False, i.e. y is never returned (since we do not
-                know the price percentage change from the last available date to the
-                next future date). You should set return_last_date_only to true when
-                making predictions during trading.
-            return_training_dfs: Whether data should be returned for model training or
-                not. You will want to set return_training_dfs to True if you need a
-                dataset for model training, validation and testing. If set to True, the
-                data for all tickers is returned as tuple of data frames: (df_x, df_y).
-                Rows with NA values for y will be dropped (i.e. the very last row for
-                each ticker will be dropped). If set to False, the data for all tickers
+                this ticker for the dt_end date.
+            return_last_date: Whether data for the most recent available date
+                per ticker should be returned. This data will have an NA value for the y
+                since the future value is not given yet. You should set return_last_date
+                to true if you want to make predictions during trading and you should
+                set it to false when you want to train a model in order to filter out
+                rows with missing y.
+            return_nonlast_dates: Whether data for the date before the most recent
+                available date per ticker should be returned. This data will have valid
+                y values for each observation (i.e. no NA). You should set
+                return_nonlast_dates to true if you want to train a model and to false
+                when you just want to make predictions during trading.
+            return_training_dfs: Whether all data should be returned as a single data
+                frame or not. You will want to set return_training_dfs to True if you
+                need a data set for model training, validation and testing.
+                If set to True, the data for all tickers is returned as tuple of data
+                frames: (df_x, df_y). If set to False, the data for all tickers
                 is returned as dictionary of tuples (df_x, df_y), where each key-value
                 pair corresponds to a particular ticker symbol.
             return_date_col: Whether or not the date column should be kept in df_x.
@@ -253,7 +262,8 @@ class DataAlpacaPocCat(BaseFeatureData):
             dt_start=dt_start,
             dt_end=dt_end,
             dt_end_required=dt_end_required,
-            return_last_date_only=return_last_date_only,
+            return_last_date=return_last_date,
+            return_nonlast_dates=return_nonlast_dates,
             return_training_dfs=return_training_dfs,
             return_date_col=return_date_col,
             return_ticker_col=return_ticker_col,
@@ -268,23 +278,23 @@ class DataAlpacaPocCat(BaseFeatureData):
 
         # Get data
         df_all = pd.DataFrame()
+        df_all_av = self.pdata.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
+        df_all_fv = self.pdata.usa_finviz_api(ticker_list, dt_start, dt_end)
 
         for ticker in ticker_list:
 
-            df_av = self.pdata.usa_alphavantage_eod([ticker], dt_start, dt_end)
-            df_yh = self.pdata.usa_yahoo_api([ticker], dt_start, dt_end)
-            df_fv = self.pdata.usa_finviz_api([ticker], dt_start, dt_end)
+            df_av = df_all_av.loc[df_all_av.ticker == ticker, :]
+            df_fv = df_all_fv.loc[df_all_fv.ticker == ticker, :]
 
-            if not df_av.empty and not df_yh.empty and not df_fv.empty:
+            if not df_av.empty and not df_fv.empty:
 
                 # Add prefix for data columns
                 idcols = ["ticker", "date"]
                 df_av.columns = [c if c in idcols else "av_" + c for c in df_av.columns]
-                df_yh.columns = [c if c in idcols else "yh_" + c for c in df_yh.columns]
                 df_fv.columns = [c if c in idcols else "fv_" + c for c in df_fv.columns]
 
                 # Merge all data sources by date
-                df_list = [df_av, df_yh, df_fv]
+                df_list = [df_av, df_fv]
                 df = reduce(lambda l, r: pd.merge(l, r, on=["ticker", "date"]), df_list)
 
                 # Skip adding df to data_dict if df does not fulfill filter conditions
@@ -325,10 +335,17 @@ class DataAlpacaPocCat(BaseFeatureData):
         # Check data
         self._check_data(df_all.drop(columns=["y"]))  # exclude y because it can have NA
 
+        # Select rows
+        if return_last_date and return_nonlast_dates:
+            df_all = df_all.reset_index(drop=True)
+        elif return_last_date:
+            df_all = df_all.loc[df_all.y.isna(), :].reset_index(drop=True)
+        elif return_nonlast_dates:
+            df_all = df_all.loc[~df_all.y.isna(), :].reset_index(drop=True)
+
         # Format output as tuple of data frames or as dict of tuples of data frames
         if return_training_dfs:
             # Tuple of data frames
-            df_all = df_all.loc[~df_all.y.isna(), :].reset_index(drop=True)
             df_x = df_all.drop(columns=["y"])
             df_y = df_all.loc[:, "y"].to_frame()
 

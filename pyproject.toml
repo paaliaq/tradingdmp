@@ -1,15 +1,16 @@
 [tool.poetry]
 name = "tradingdmp"
-version = "0.8.2"
+version = "0.8.3"
 description = ""
 authors = ["Julius Kittler", "August Andersen"]
 
 [tool.poetry.dependencies]
 python = "3.8.x"
-pandas = "^1.0"
-numpy = "^v1.19"
-pymongo = "^3.11" 
-requests = "^2.25.1"
+pandas = "^1.0.0"
+numpy = "^1.0.0"
+scipy = "^1.0.0"
+pymongo = "^3.0.0"
+requests = "^2.0.0"
 pytz = "^2021.1"
 mljar-supervised = "^0.10.3"
 
