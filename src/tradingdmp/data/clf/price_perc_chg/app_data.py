@@ -300,7 +300,8 @@ class DataAlpacaPocCat(BaseFeatureData):
                 # Skip adding df to data_dict if df does not fulfill filter conditions
                 if dt_end_required:
                     # Check if the dt_end is available for the ticker.
-                    dt_end_avail = pd.to_datetime(dt_end) in df.date.to_list()
+                    dt_end_str = dt_end.date().strftime(format="%Y-%m-%d")
+                    dt_end_avail = dt_end_str in df.date.astype(str).to_list()
                     if not dt_end_avail:
                         continue
 
