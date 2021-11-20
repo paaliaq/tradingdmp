@@ -74,7 +74,7 @@ class PrepData:
         # We do not check that index is _id because a single _id can turn in man columns
         # for some data sources, such as IEX.
 
-    def usa_alphavantage_eod(
+    async def usa_alphavantage_eod(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -88,7 +88,7 @@ class PrepData:
             $ data = pdata.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
-        df = self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -329,7 +329,7 @@ class PrepData:
         return df
 
     # flake8: noqa: C901
-    def usa_finviz_api(
+    async def usa_finviz_api(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -346,7 +346,7 @@ class PrepData:
         self._check_inputs(ticker_list, dt_start, dt_end)
 
         # Get raw data from database
-        df = self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -357,6 +357,7 @@ class PrepData:
             df = df.loc[:, colnames]
 
             # Extract 'data' column into multiple columns
+            # Maximilian: Can this be improved? Just this line takes more than 10 seconds
             df = pd.concat(
                 [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
             )
@@ -500,7 +501,7 @@ class PrepData:
 
         return df
 
-    def bors_data(
+    async def bors_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -515,7 +516,7 @@ class PrepData:
             $ data = pdata.bors_data(ticker_list = ["ABB", "AAB"])
         """
         # Get raw data from database
-        df = self.rd.bors_data(
+        df = await self.rd.bors_data(
             ticker_list=ticker_list,
             dt_start=dt_start,
             dt_end=dt_end,

@@ -1,12 +1,15 @@
 """Application classes for data pipelines that are used in our trading apps."""
 
 import datetime
-from functools import reduce
-from typing import Any, Dict, List, Tuple, Union
+from asyncio import gather
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial, reduce
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from dateutil.rrule import FR, MO, TH, TU, WE, WEEKLY, rrule
+from pandas import DataFrame
 from tradingdmp.data.clf.base_data import BaseFeatureData
 from tradingdmp.data.utils.prep_data import PrepData
 
@@ -165,7 +168,7 @@ class DataAlpacaPocCat(BaseFeatureData):
             raise ValueError("df_x contains inf or -inf values.")
 
     # flake8: noqa: C901
-    def get_data(
+    async def get_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.datetime,
@@ -186,7 +189,8 @@ class DataAlpacaPocCat(BaseFeatureData):
         ],
         **kwargs: Any
     ) -> Union[
-        Dict[str, Tuple[pd.DataFrame, pd.DataFrame]], Tuple[pd.DataFrame, pd.DataFrame]
+        Dict[str, Tuple[pd.DataFrame, pd.DataFrame]],
+        Tuple[pd.DataFrame, pd.DataFrame],
     ]:
         """Method for getting data that can be passed to a model.
 
@@ -277,61 +281,32 @@ class DataAlpacaPocCat(BaseFeatureData):
         bins = [-np.inf] + bins + [np.inf]
 
         # Get data
-        df_all = pd.DataFrame()
-        df_all_av = self.pdata.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
-        df_all_fv = self.pdata.usa_finviz_api(ticker_list, dt_start, dt_end)
+        df_all_av_task = self.pdata.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
+        df_all_fv_task = self.pdata.usa_finviz_api(ticker_list, dt_start, dt_end)
 
-        for ticker in ticker_list:
+        df_all_av = await df_all_av_task
+        df_all_fv = await df_all_fv_task
 
-            df_av = df_all_av.loc[df_all_av.ticker == ticker, :]
-            df_fv = df_all_fv.loc[df_all_fv.ticker == ticker, :]
+        # Run in several processes
+        with ProcessPoolExecutor(max_workers=None) as executor:
 
-            if not df_av.empty and not df_fv.empty:
+            results = []
 
-                # Add prefix for data columns
-                idcols = ["ticker", "date"]
-                df_av.columns = [c if c in idcols else "av_" + c for c in df_av.columns]
-                df_fv.columns = [c if c in idcols else "fv_" + c for c in df_fv.columns]
+            curried = partial(
+                _process_ticker,
+                df_all_av,
+                df_all_fv,
+                bins,
+                dt_end_required,
+                dt_end,
+                n_ppc_per_row,
+                bin_labels,
+            )
 
-                # Merge all data sources by date
-                df_list = [df_av, df_fv]
-                df = reduce(lambda l, r: pd.merge(l, r, on=["ticker", "date"]), df_list)
+            for df in executor.map(curried, ticker_list):
+                results.append(df)
 
-                # Skip adding df to data_dict if df does not fulfill filter conditions
-                if dt_end_required:
-                    # Check if the dt_end is available for the ticker.
-                    dt_end_str = dt_end.date().strftime("%Y-%m-%d")
-                    dt_end_avail = dt_end_str in df.date.astype(str).to_list()
-                    if not dt_end_avail:
-                        continue
-
-                # If there are not sufficient dates for this ticker, do not return it
-                sufficient_dates_avail = n_ppc_per_row + 1 <= len(df.date.unique())
-                if not sufficient_dates_avail:
-                    continue
-
-                # Create y as percentage change of av_close from current to next day
-                avcols = df.columns.str.startswith("av_")
-                df_pct = df.loc[:, avcols].replace(0.0, 0.0001).pct_change()
-                df.loc[:, "y"] = df_pct.av_close.iloc[1:].to_list() + [np.nan]
-                df["y"] = pd.cut(df["y"], bins, labels=bin_labels)
-
-                # Convert OHCL data to df_pct with percentage changes from day to day
-                key_cols = range(n_ppc_per_row)
-                df_pct = pd.concat(
-                    [df_pct.shift(-i) for i in key_cols],
-                    axis=1,
-                    keys=map(str, key_cols),
-                ).dropna()
-                df_pct.columns = df_pct.columns.map(lambda x: x[1] + "_" + x[0])
-                df_pct = df_pct.reset_index(drop=True)
-
-                # Merge df_pct with df_static, the non-percentage change data
-                df_static = df.tail(len(df_pct)).reset_index(drop=True)
-                df_ticker = pd.merge(
-                    df_static, df_pct, left_index=True, right_index=True, how="left"
-                )
-                df_all = df_all.append(df_ticker)
+            df_all = pd.concat(results)
 
         # Check data
         self._check_data(df_all.drop(columns=["y"]))  # exclude y because it can have NA
@@ -376,3 +351,79 @@ class DataAlpacaPocCat(BaseFeatureData):
 
             # Return result
             return data_dict
+
+
+def _process_ticker(
+    df_all_av: DataFrame,
+    df_all_fv: DataFrame,
+    bins: List[Any],
+    dt_end_required: bool,
+    dt_end: datetime.datetime,
+    n_ppc_per_row: Union[Any, Literal[10]],
+    bin_labels: List[str],
+    ticker: str,
+) -> DataFrame:
+    """Processes a single ticker.
+
+    Args:
+        df_all_av (DataFrame): Alphavantage dataframe.
+        df_all_fv (DataFrame): Finfiz dataframe.
+        bins (List[Any]): The bins.
+        dt_end_required (bool): If the end date is required
+        dt_end (datetime): End datetime.
+        n_ppc_per_row (Union[Any, Literal[10]]): ppc per row.
+        bin_labels (List[str]): The labels
+        ticker (str): The ticker
+
+    Returns:
+        DataFrame: The processed data frame.
+    """
+    df_av = df_all_av.loc[df_all_av.ticker == ticker, :]
+    df_fv = df_all_fv.loc[df_all_fv.ticker == ticker, :]
+
+    if not df_av.empty and not df_fv.empty:
+
+        # Add prefix for data columns
+        idcols = ["ticker", "date"]
+        df_av.columns = [c if c in idcols else "av_" + c for c in df_av.columns]
+        df_fv.columns = [c if c in idcols else "fv_" + c for c in df_fv.columns]
+
+        # Merge all data sources by date
+        df_list = [df_av, df_fv]
+        df = reduce(lambda l, r: pd.merge(l, r, on=["ticker", "date"]), df_list)
+
+        # Skip adding df to data_dict if df does not fulfill filter conditions
+        if dt_end_required:
+            # Check if the dt_end is available for the ticker.
+            dt_end_str = dt_end.date().strftime("%Y-%m-%d")
+            dt_end_avail = dt_end_str in df.date.astype(str).to_list()
+            if not dt_end_avail:
+                return None
+
+        # If there are not sufficient dates for this ticker, do not return it
+        sufficient_dates_avail = n_ppc_per_row + 1 <= len(df.date.unique())
+        if not sufficient_dates_avail:
+            return None
+
+        # Create y as percentage change of av_close from current to next day
+        avcols = df.columns.str.startswith("av_")
+        df_pct = df.loc[:, avcols].replace(0.0, 0.0001).pct_change()
+        df.loc[:, "y"] = df_pct.av_close.iloc[1:].to_list() + [np.nan]
+        df["y"] = pd.cut(df["y"], bins, labels=bin_labels)
+
+        # Convert OHCL data to df_pct with percentage changes from day to day
+        key_cols = range(n_ppc_per_row)
+        df_pct = pd.concat(
+            [df_pct.shift(-i) for i in key_cols],
+            axis=1,
+            keys=map(str, key_cols),
+        ).dropna()
+        df_pct.columns = df_pct.columns.map(lambda x: x[1] + "_" + x[0])
+        df_pct = df_pct.reset_index(drop=True)
+
+        # Merge df_pct with df_static, the non-percentage change data
+        df_static = df.tail(len(df_pct)).reset_index(drop=True)
+        df_ticker = pd.merge(
+            df_static, df_pct, left_index=True, right_index=True, how="left"
+        )
+        return df_ticker

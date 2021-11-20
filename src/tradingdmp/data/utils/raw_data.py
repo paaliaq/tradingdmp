@@ -1,9 +1,13 @@
 """Utility functions to get raw, unprocessed data from our database."""
 import datetime
-from typing import List
+import logging
+from asyncio import gather
+from typing import Any, List, Union
 
+import motor.motor_asyncio as motor
 import pandas as pd
-import pymongo
+
+logger = logging.getLogger(__name__)
 
 
 class RawData:
@@ -11,7 +15,7 @@ class RawData:
 
     def __init__(self, mongodbkey: str):
         """Initializes connection to mongodb."""
-        self.client = pymongo.MongoClient(mongodbkey)
+        self.client = motor.AsyncIOMotorClient(mongodbkey)
 
     def _check_inputs(
         self,
@@ -43,25 +47,38 @@ class RawData:
 
         return ticker_list
 
-    def _get_data(
+    async def _get_ticker(
+        self, ticker: str, condition: dict, db: Any
+    ) -> Union[pd.DataFrame, None]:
+
+        try:
+            cursor = db[ticker].find(condition)
+            documents = [document for document in await cursor.to_list(length=100)]
+            df_ticker = pd.DataFrame(documents)
+            df_ticker.loc[:, "ticker"] = ticker
+            logger.warning(f"SUCCESS {ticker}", {ticker: ticker})
+            return df_ticker
+        except Exception:
+            logger.exception(f"Could not query ticker {ticker}", {ticker: ticker})
+            return None
+
+    async def _get_data(
         self,
-        db: pymongo.database.Database,
+        db: Any,
         condition: dict,
         ticker_list: List[str],
     ) -> pd.DataFrame:
         """Function to get data for all tickers in ticker_list from the specified db."""
-        # Prepare variables
-        df = pd.DataFrame()
+        # Kick of all tasks and await their result
+        ticker_dfs_raw = await gather(
+            *[self._get_ticker(ticker, condition, db) for ticker in ticker_list]
+        )
 
-        # Get data
-        for ticker in ticker_list:
-            try:
-                df_ticker = pd.DataFrame(db[ticker].find(condition))
-                df_ticker.loc[:, "ticker"] = ticker
-                df = df.append(df_ticker)
-            except Exception:
-                print("Querying ticker:", ticker, "failed")
-                continue
+        # Failed taks return "None" and must hence be filtered
+        ticker_dfs_ok = filter(lambda df: df is not None, ticker_dfs_raw)
+
+        # Create the data frame
+        df = pd.concat(ticker_dfs_ok)
 
         # Set index
         if not df.empty:
@@ -82,7 +99,7 @@ class RawData:
             if df.index.name != "_id":
                 raise ValueError("df index must be '_id'.")
 
-    def usa_alphavantage_eod(
+    async def usa_alphavantage_eod(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -113,7 +130,7 @@ class RawData:
 
         # Fetch data
         db = self.client[db_name]
-        df = self._get_data(db, condition, ticker_list)
+        df = await self._get_data(db, condition, ticker_list)
 
         # Check data
         self._check_data(df)
@@ -196,7 +213,7 @@ class RawData:
 
         return df
 
-    def usa_finviz_api(
+    async def usa_finviz_api(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -227,14 +244,14 @@ class RawData:
 
         # Fetch data
         db = self.client[db_name]
-        df = self._get_data(db, condition, ticker_list)
+        df = await self._get_data(db, condition, ticker_list)
 
         # Check data
         self._check_data(df)
 
         return df
 
-    def bors_data(
+    async def bors_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -276,7 +293,7 @@ class RawData:
         time_key = granularity_dict[granularity]["time_key"]
         condition = {time_key: {"$gte": dt_start, "$lte": dt_end}}
         db = self.client[granularity_dict[granularity]["collection_name"]]
-        df = self._get_data(db, condition, ticker_list)
+        df = await self._get_data(db, condition, ticker_list)
 
         df.rename({time_key: "date"}, axis=1, inplace=True)
 
