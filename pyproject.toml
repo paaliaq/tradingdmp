@@ -9,10 +9,10 @@ python = "3.8.x"
 pandas = "^1.0.0"
 numpy = "^1.0.0"
 scipy = "^1.0.0"
-pymongo = "^3.0.0"
 requests = "^2.0.0"
 pytz = "^2021.1"
 mljar-supervised = "^0.10.3"
+motor = "^2.5.1"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

@@ -18,7 +18,7 @@ class BaseFeatureData(ABC):
     with timeseries data.
     """
 
-    def get_data_cached(
+    async def get_data_cached(
         self,
         ticker_list: List[str],
         dt_start: datetime.datetime,
@@ -108,7 +108,7 @@ class BaseFeatureData(ABC):
                 return data
         # Get and cach data from mongodb if not available
         else:
-            data = self.get_data(
+            data = await self.get_data(
                 ticker_list=ticker_list,
                 dt_start=dt_start,
                 dt_end=dt_end,
@@ -125,7 +125,7 @@ class BaseFeatureData(ABC):
             return data
 
     @abstractmethod
-    def get_data(
+    async def get_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.datetime,
@@ -206,7 +206,7 @@ class BaseTimeData(ABC):
     with timeseries data.
     """
 
-    def get_data_cached(
+    async def get_data_cached(
         self,
         ticker_list: List[str],
         dt_start: datetime.datetime,
@@ -259,7 +259,7 @@ class BaseTimeData(ABC):
                 return data
         # Get and cach data from mongodb if not available
         else:
-            data = self.get_data(
+            data = await self.get_data(
                 ticker_list=ticker_list,
                 dt_start=dt_start,
                 dt_end=dt_end,
@@ -270,7 +270,7 @@ class BaseTimeData(ABC):
             return data
 
     @abstractmethod
-    def get_data(
+    async def get_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.datetime,
