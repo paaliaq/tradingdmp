@@ -1,7 +1,7 @@
 """Application classes for data pipelines that are used in our trading apps."""
 
 import datetime
-from asyncio import gather
+from asyncio import create_task, gather
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial, reduce
 from typing import Any, Dict, List, Literal, Tuple, Union
@@ -281,8 +281,12 @@ class DataAlpacaPocCat(BaseFeatureData):
         bins = [-np.inf] + bins + [np.inf]
 
         # Get data
-        df_all_av_task = self.pdata.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
-        df_all_fv_task = self.pdata.usa_finviz_api(ticker_list, dt_start, dt_end)
+        df_all_fv_task = create_task(
+            self.pdata.usa_finviz_api(ticker_list, dt_start, dt_end)
+        )
+        df_all_av_task = create_task(
+            self.pdata.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
+        )
 
         df_all_av = await df_all_av_task
         df_all_fv = await df_all_fv_task

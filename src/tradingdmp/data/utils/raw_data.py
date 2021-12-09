@@ -137,7 +137,7 @@ class RawData:
 
         return df
 
-    def usa_iex_1min(
+    async def usa_iex_1min(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -168,14 +168,14 @@ class RawData:
 
         # Fetch data
         db = self.client[db_name]
-        df = self._get_data(db, condition, ticker_list)
+        df = await self._get_data(db, condition, ticker_list)
 
         # Check data
         self._check_data(df)
 
         return df
 
-    def usa_yahoo_api(
+    async def usa_yahoo_api(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -206,7 +206,7 @@ class RawData:
 
         # Fetch data
         db = self.client[db_name]
-        df = self._get_data(db, condition, ticker_list)
+        df = await self._get_data(db, condition, ticker_list)
 
         # Check data
         self._check_data(df)
