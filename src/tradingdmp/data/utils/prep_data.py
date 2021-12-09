@@ -8,6 +8,7 @@ The pre-processing includes the following:
 - renaming columns
 The pre-processing excludes adding/transforming features, which belongs in feat_data.py.
 """
+import asyncio
 import datetime
 import gc
 from typing import List
@@ -74,7 +75,7 @@ class PrepData:
         # We do not check that index is _id because a single _id can turn in man columns
         # for some data sources, such as IEX.
 
-    def usa_alphavantage_eod(
+    async def usa_alphavantage_eod(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -88,7 +89,7 @@ class PrepData:
             $ data = pdata.usa_alphavantage_eod(ticker_list = ["MSFT", "AAPL"])
         """
         # Get raw data from database
-        df = self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_alphavantage_eod(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -142,7 +143,7 @@ class PrepData:
 
         return df
 
-    def usa_iex_1min(
+    async def usa_iex_1min(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -159,7 +160,7 @@ class PrepData:
         self._check_inputs(ticker_list, dt_start, dt_end)
 
         # Get raw data from database
-        df = self.rd.usa_iex_1min(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_iex_1min(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -228,7 +229,7 @@ class PrepData:
 
         return df
 
-    def usa_yahoo_api(
+    async def usa_yahoo_api(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -245,7 +246,7 @@ class PrepData:
         self._check_inputs(ticker_list, dt_start, dt_end)
 
         # Get raw data from database
-        df = self.rd.usa_yahoo_api(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_yahoo_api(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -329,7 +330,7 @@ class PrepData:
         return df
 
     # flake8: noqa: C901
-    def usa_finviz_api(
+    async def usa_finviz_api(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -346,7 +347,7 @@ class PrepData:
         self._check_inputs(ticker_list, dt_start, dt_end)
 
         # Get raw data from database
-        df = self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
+        df = await self.rd.usa_finviz_api(ticker_list, dt_start, dt_end)
 
         if not df.empty:
             # Keep rows with data in 'data' column
@@ -357,6 +358,7 @@ class PrepData:
             df = df.loc[:, colnames]
 
             # Extract 'data' column into multiple columns
+            # Maximilian: Can this be improved? Just this line takes more than 10 seconds
             df = pd.concat(
                 [df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1
             )
@@ -447,6 +449,8 @@ class PrepData:
             m = {"K": 3, "M": 6, "B": 9, "T": 12}
             N = len(df)
             for col in colnames:
+                await asyncio.sleep(0)  # yield task
+
                 # Remove '%' unit at end of string
                 df.loc[:, col] = df.loc[:, col].str.replace("%", "")
 
@@ -500,7 +504,7 @@ class PrepData:
 
         return df
 
-    def bors_data(
+    async def bors_data(
         self,
         ticker_list: List[str],
         dt_start: datetime.date = datetime.datetime(2000, 1, 1),
@@ -515,7 +519,7 @@ class PrepData:
             $ data = pdata.bors_data(ticker_list = ["ABB", "AAB"])
         """
         # Get raw data from database
-        df = self.rd.bors_data(
+        df = await self.rd.bors_data(
             ticker_list=ticker_list,
             dt_start=dt_start,
             dt_end=dt_end,
