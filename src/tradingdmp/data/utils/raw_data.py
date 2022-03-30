@@ -53,7 +53,7 @@ class RawData:
 
         try:
             cursor = db[ticker].find(condition)
-            documents = [document for document in await cursor.to_list()]
+            documents = [document for document in await cursor.to_list(None)]
             df_ticker = pd.DataFrame(documents)
             df_ticker.loc[:, "ticker"] = ticker
             logger.warning(f"SUCCESS {ticker}", {ticker: ticker})
